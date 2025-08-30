@@ -39,6 +39,7 @@ These results provide more realistic estimates of the dynamics of materials acro
 
 
 ## Citation
+If you use this code or data, please cite:  
 [1] Shadab, M.A., Vance, S.D., Silber, E.A., Crosta, A.P., Carnahan, E., Jordan, J.S. and Hesse, M.A., 2025. Rapid migration of impact melt through ocean world ices: Selk crater on Titan and Mannann’an crater on Europa (under review).
 
 ## Getting Started

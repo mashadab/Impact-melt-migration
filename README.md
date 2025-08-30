@@ -15,7 +15,7 @@ These results provide more realistic estimates of the dynamics of materials acro
 
 # Ice layer formation
 ## Authors
-- Mohammad Afzal Shadab<sup>1,2,3</sup> (mashadab@utexas.edu) ⭐
+- Mohammad Afzal Shadab<sup>1,2,3</sup> (mashadab@princeton.edu) ⭐
 - Steven D. Vance<sup>4</sup> (steven.d.vance@jpl.nasa.gov)
 - Elizabeth A. Silber<sup>5</sup>
 - Alvaro P. Crosta<sup>6</sup>

@@ -1,6 +1,17 @@
-# Impact-melt-migration
-This repository is a companion to Shadab et al.'s work on impact melt migration with differential flow of melt and solid phases on Titan and Europa.
+# Rapid migration of impact melt through ocean world ices: Selk crater on Titan and Mannann’an crater on Europa
 
+## Overview
+Meteorite impacts on icy ocean worlds may transport oxidants, organics, and nutrients from the surface to subsurface oceans, contributing to their habitability. Impact-generated melt, being heavier than ice, slowly migrates downward through viscous foundering that is slowed by heat losses. These losses may cause melt to refreeze within the ice shells, hindering the delivery of materials to subsurface oceans.  
+
+This study improves the current understanding of impact melt migration by coupling ice compaction and melt percolation to viscous foundering while capturing their competition against heat transport and phase changes. The combination of viscous deformation with ice compaction and melt percolation requires a significant extension of mathematical and numerical capabilities.  
+
+We study the post-impact melt migration of impacts that led to the formation of **Selk crater on Titan** and **Mannann’an crater on Europa**. We find that the infiltration process can reduce the migration timescales by at least three orders of magnitude and increase the possibility of material delivery to the ocean, in the case of Selk crater.  
+
+Further, we derive theoretical estimates for melt migration time scales with a new dimensionless parameter, the **infiltration–foundering time ratio**, which dictates whether melt infiltration or viscous foundering will be the dominant process of melt migration.  
+
+These results provide more realistic estimates of the dynamics of materials across the ice shell and their final distributions in the ice shell and the subsurface ocean to assess habitability. By developing and utilizing state-of-the-art computational and theoretical models, this work ultimately advances the knowledge of habitability on ocean worlds following meteorite impacts, with direct implications for upcoming astrobiology missions like **Europa Clipper** and **Dragonfly**.
+
+---
 
 # Ice layer formation
 ## Authors

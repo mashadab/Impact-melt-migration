@@ -4,26 +4,31 @@ This repository is a companion to Shadab et al.'s work on impact melt migration 
 
 # Ice layer formation
 ## Authors
-- Mohammad Afzal Shadab<sup>1,2,3</sup> (mashadab@princeton.edu)
-- Steve Vance<sup>2</sup>
-- Anja Rutishauser<sup>4,5</sup>
-- Cyril Grima<sup>3,4</sup>
-- Marc Andre Hesse<sup>1,3,4</sup> (mhesse@jsg.utexas.edu)
+- Mohammad Afzal Shadab<sup>1,2,3</sup> (mashadab@utexas.edu) ⭐
+- Steven D. Vance<sup>4</sup> (steven.d.vance@jpl.nasa.gov)
+- Elizabeth A. Silber<sup>5</sup>
+- Alvaro P. Crosta<sup>6</sup>
+- Evan Carnahan<sup>7</sup>
+- Jacob S. Jordan<sup>8</sup>
+- Marc Andre Hesse<sup>9,10</sup> (mhesse@jsg.utexas.edu)
+
+⭐ = corresponding author  
 
 ## Affiliations
-1 Oden Institute for Computational Engineering and Sciences, The University of Texas at Austin
-
-2 NASA Jet Propulsion Laboratory, California Institute of Technology
-
-3 University of Texas Institute for Geophysics   
-
-4 Jackson School of Geosciences, The University of Texas at Austin
-
-5 Department of Glaciology and Climate, Geological Survey of Denmark and Greenland
+1. Oden Institute for Computational Engineering and Sciences, The University of Texas at Austin, Austin, TX 78712, USA  
+2. Centre for Planetary Systems Habitability, The University of Texas at Austin, Austin, TX 78712, USA  
+3. Department of Civil and Environmental Engineering, Princeton University, Princeton, NJ 08544, USA  
+4. Jet Propulsion Laboratory, California Institute of Technology, Pasadena, CA 91109, USA  
+5. Department of Earth Sciences, Western University, London, ON N6A 5B7, Canada  
+6. Institute of Geosciences, University of Campinas (UNICAMP), Campinas, SP 13083-970, Brazil  
+7. Zendar, Berkeley, CA 94710, USA  
+8. Mati Carbon, Houston, TX 77019, USA  
+9. University of Texas Institute for Geophysics, Austin, TX 78758, USA  
+10. Department of Geological Sciences, Jackson School of Geosciences, The University of Texas at Austin, Austin, TX 78712, USA  
 
 
 ## Citation
-[1] Shadab, Vance, Rutishauser, Grima, and Hesse, 202X. Melt supply variability controls the formation of ice layers in Greenland firn (under review).
+[1] Shadab, M.A., Vance, S.D., Silber, E.A., Crosta, A.P., Carnahan, E., Jordan, J.S. and Hesse, M.A., 2025. Rapid migration of impact melt through ocean world ices: Selk crater on Titan and Mannann’an crater on Europa (under review).
 
 ## Getting Started
 

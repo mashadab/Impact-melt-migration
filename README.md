@@ -32,12 +32,12 @@ After cloning the repository and installing the required libraries, run the Matl
 Comments are provided in the code. Output figures are located in the Figures folder.
 
 #### Melt migration with and without different motion of melt and ice phases
-##Titan
+## Titan
 <p align="center">
 <img src="./Main/Figures/validation_figure.png" height="700">
 </p>
 
-##Europa
+## Europa
 <p align="center">
 <img src="./Main/Figures/validation_figure.png" height="700">
 </p>

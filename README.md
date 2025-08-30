@@ -31,21 +31,21 @@ This repository is a companion to Shadab et al.'s work on impact melt migration 
 After cloning the repository and installing the required libraries, run the Matlab file for Titan and Europa corresponding to figures in the paper.
 Comments are provided in the code. Output figures are located in the Figures folder.
 
-#### Melt migration with and without different motion of melt and ice phases
+## Melt migration with and without different motion of melt and ice phases
 
 ## Titan
-# Without differential motion
+### Without differential motion
 https://github.com/user-attachments/assets/165d2d0c-c7b5-4f5f-854f-49be701ec758
 
 
-# With differential motion
+### With differential motion
 https://github.com/user-attachments/assets/9a5e8edf-5919-4a18-a072-86fe3f0685c1
 
 
 ## Europa
-# Without differential motion
+### Without differential motion
 https://github.com/user-attachments/assets/8775b99a-a6f4-4c33-811d-b0dbe380db2c
 
-# With differential motion
+### With differential motion
 https://github.com/user-attachments/assets/31448149-b997-4603-ad6c-abe6d6615743
 

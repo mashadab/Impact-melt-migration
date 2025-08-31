@@ -36,11 +36,6 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
     % threshold of initial fluid left in ice shell to stop simulation at
     termFrac = 0.005;
     
-    % load simulations from initial conditions folder (Digitized output via
-    % Python from iSALE simulations)
-    fp = '../initial_conditions/'; %loading the initial conditions
-    load([fp 'Wakita_data_cropped_high_res.mat']); %loading porosity phi and temp T
-
     phi_Shigeru =importdata('./Shigeru_data/hc10_melt_t0.dat');  %percent melt fraction percentage [%] with x and y in km
     T_Shigeru   =importdata('./Shigeru_data/hc10_temp_t0.dat');  %Temperature [K]
     

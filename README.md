@@ -42,8 +42,7 @@ If you use this code or data, please cite:
 ## Getting Started
 
 ### Quick Usage
-After cloning the repository and installing the required libraries, run the Matlab file for Titan and Europa corresponding to figures in the paper.
-Comments are provided in the code. Output figures are located in the Figures folder.
+After cloning the repository and installing the required libraries, run the Matlab file for Titan and Europa called `Titan_wrapper.m` and `Europa_wrapper.m`. The scripts to make the videos separately are `Titan_video_creation.` and `Europa_video_creation.m` for Titan and Europa respectively. Comments are provided in the code. Output figures are located in the `\Figures` folder. Output matlab data is in `\Output` folder. 
 
 ## Melt migration with and without different motion of melt and ice phases
 The following videos show the melt fraction (0 = all ice, 1 = all melt) and temperatures for the simulation outputs ran in cylindrical r-z coordinates (axisymmetric) at different time instants mentioned on the right. The inputs conditions come from iSALE outputs for Mannanan crater on Europa from Cox and Bauer (2015) and Selk crater from Wakita et. al (2023).

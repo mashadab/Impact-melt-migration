@@ -461,7 +461,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             % Enlarge figure to full screen.
             [PSI,psi_min,psi_max] = comp_streamfun(vm,Grid.p);
             set(gcf, 'Position', [50 50 1500 600])
-            ax1 = subplot(1,4,1);
+            ax1 = subplot(1,2,1);
             cla;
             hold on
             axis equal
@@ -470,14 +470,14 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             c1 = colorbar('NorthOutside');
             caxis([min(Tplot(:)) max(Tplot(:))]*DT+T_t);
             cStrVal = linspace(min(PSI(:)),max(PSI(:)),10);
-            contour(Grid.p.xf*d/1e3,Grid.p.yf*d/1e3,PSI,'k','LevelList',cStrVal);
+            %contour(Grid.p.xf*d/1e3,Grid.p.yf*d/1e3,PSI,'k','LevelList',cStrVal);
             c1.Label.String = 'Temperature, K';
             xlabel('x-dir, km');
             ylabel('z-dir, km');
             colormap(ax1,reds);
 
             %melt fraction plot
-            ax2 = subplot(1,4,2);
+            ax2 = subplot(1,2,2);
             t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 25;
             cla;
             axis equal
@@ -491,35 +491,6 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             ylabel('z-dir, km');
             c2.Label.String = 'Melt fraction, 1';
             
-            %Organics tracer location concentration plot  
-            % Create green-to-red colormap
-            ax3 = subplot(1,4,3);
-            cla;
-            axis equal
-            hold on
-            c3 = colorbar('NorthOutside');
-            %contour(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),'r','LevelList',5e-2),hold on
-            trc1_plot = trc1; %trc1_plot(trc1<=1e-8) = nan;
-            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(trc1_plot,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2)
-            xlabel('x-dir, km');
-            ylabel('z-dir, km');
-            c3.Label.String = 'Organics Conc., 1';
-            colormap(ax3,greens);
-            
-            %Clathrates tracer location concentration plot
-            % Create green-to-red colormap
-            ax4 = subplot(1,4,4);
-            cla;
-            axis equal
-            hold on
-            c4 = colorbar('NorthOutside');
-            %contour(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),'r','LevelList',5e-2),hold on
-            trc2_plot = trc2; %trc1_plot(trc1<=1e-8) = nan;
-            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(trc2_plot,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2)
-            xlabel('x-dir, km');
-            ylabel('z-dir, km');
-            c4.Label.String = 'Clathrates conc., 1';
-            colormap(ax4,flipud(gray));
             if rem(i,100)==0 || i==1
                             save(['../Output/Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
                 'Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
@@ -529,116 +500,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             %if i<1500
             saveas(h,sprintf('../figures/Europa_res_fig%dkc%d.png',i, kc));          
             %end
-            %{
-            [PSI,psi_min,psi_max] = comp_streamfun(vm,Grid.p);
-            set(gcf, 'Position', [50 50 1500 600])
-            subplot(3,3,1)
-            cla;
-            hold on
-            axis equal
-            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,Tplot*DT+T_t,40,'linestyle','none'),view(2),hold on
-            c = colorbar('NorthOutside');
-            caxis([min(Tplot(:)) max(Tplot(:))]*DT+T_t);
-            cStrVal = linspace(min(PSI(:)),max(PSI(:)),10);
-            contour(Grid.p.xf*d/1e3,Grid.p.yf*d/1e3,PSI,'k','LevelList',cStrVal);
-            c.Label.String = 'Temperature, K';
-            xlabel('x-dir, km')
-            ylabel('z-dir, km')
-
-            %melt fraction plot
-            subplot(3,3,2)
-            sgtitle(sprintf('time=%.3f years',tTot));
-            cla;
-            axis equal
-            hold on
-            contourf(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on
-            c = colorbar('NorthOutside');
-            contour(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),'r','LevelList',5e-2)
-            xlabel('x-dir, 1')
-            ylabel('z-dir, 1')
-            c.Label.String = 'Melt fraction, 1';
-            
-            %Tracer location concentration plot          
-            ax3 = subplot(3,3,3);
-            cla;
-            axis equal
-            hold on
-            c = colorbar('NorthOutside');
-            contour(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),'r','LevelList',5e-2),hold on
-            trc1_plot = trc1; %trc1_plot(trc1<=1e-8) = nan;
-            contourf(X,Y,reshape(trc1_plot,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2)
-            xlabel('x-dir, 1')
-            ylabel('z-dir, 1')
-            c.Label.String = 'Tracer Conc.';
-            colormap(ax3,flipud(gray));
-            
-            
-            %average in radial  direction temperature in fraction plot along z
-            subplot(3,3,4)
-            cla;
-            plot(mean(reshape(T,Grid.p.Ny,Grid.p.Nx),2),Grid.p.yc)
-            xlabel('Avg. temp');
-            ylabel('z-dir, 1');
-            
-            %total melt remaining as a function of time          
-            subplot(3,3,5)
-            cla;
-            hold on
-            plot(phiFracRem);
-            ylabel('Total melt remaining, \%');
-            xlabel('Time, yrs')
-
-            %dimensionless thermal conductivity at each time
-            subplot(3,3,6)
-            cla;
-            hold on
-            axis equal
-            contourf(X,Y,reshape(kappaPrimePlot,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on
-            c = colorbar('NorthOutside');
-            xlabel('x-dir, 1')
-            ylabel('z-dir, 1')
-            c.Label.Interpreter = 'latex';
-            c.TickLabelInterpreter = 'latex';
-            c.Label.String = 'Non-dim thermal conductivity';
-            
-            %Melt drained through the two planes to calculate the total
-            %melt drained from the ocean
-            [Xc,Yf] = meshgrid(Grid.p.xc,Grid.p.yf);
-            subplot(3,3,7)
-            cla;
-            plot(tVec,phiDrain1Vec);
-            hold on
-            plot(tVec,phiDrain2Vec);
-            legend('intefrace','1 above interface','Location','NorthWest');
-            ylabel('Melt drained, m$^3$');
-            xlabel('Time, yrs')
-            
-            %Percentage of melt drained through the two planes to 
-            %calculate the total melt drained from the ocean
-            subplot(3,3,8)
-            cla;
-            plot(tVec,phiDrain1Vec/phiOrig*100);
-            hold on
-            plot(tVec,phiDrain2Vec/phiOrig*100);
-            legend('interface','1 above interface','Location','NorthWest');
-            ylabel('Percentage of melt drained, \%');
-            xlabel('Time, yrs')
-            
-            %Total dimensionless buoyancy
-            subplot(3,3,9)
-            cla;
-            axis equal
-            contourf(Xc,Yf,reshape(-fsVec,Grid.p.Ny+1,Grid.p.Nx),40,'linestyle','none'),view(2),hold on
-            c = colorbar('NorthOutside');
-            c.Label.Interpreter = 'latex';
-            c.TickLabelInterpreter = 'latex';
-            c.Label.String = 'Total Bouyancy, 1';
-            xlabel('x-dir, 1')
-            ylabel('z-dir, 1')
-            axis equal
-            saveas(h,sprintf('../figures/fig%d.png',i));
-            
-            %}
+   
             
             % convert the image to a frame
             frameno = frameno + 1;

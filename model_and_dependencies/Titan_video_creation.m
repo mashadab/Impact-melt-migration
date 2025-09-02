@@ -28,29 +28,13 @@ fp = '../Output/';
 
 
 %% Time indices
-kc_OM =16;
+kc_OM =16;   %set the order of magnitude of the permeability 
 
-if kc_OM == 10
-%inds_arr = 1:4:620;
-
-inds_arr = [1,100:100:50000];%Stokes-ish
-
-end
-
-if kc_OM == 8
-%inds_arr = [1,10:20:400,500:100:22200];
-inds_arr =  [1,400:400:80000];%[1,5000,10000,20000,30000,35000,42000,50000,60000,80000]; %Darcy-Stokes
-
-end
-
-if kc_OM == 16
-%inds_arr = [1,100:100:20000];
-inds_arr = [1,400:400:100000];%[1,1500,3000,6000,11000,20000,40000,70000,85000,100000];%Stokes
-end
+inds_arr = [1,100:100:1000];
 
 %% Video setup
  v = VideoWriter(sprintf("../figures/Titan_14kc1.85e-%s_Ea_50_output_%dC.mp4",num2str(kc_OM)),'MPEG-4');
-v.FrameRate = 30;
+v.FrameRate = 2;
 open(v);
 
 figure('Units','centimeters','Position',[1,1,22,9.5*2+0.5]);

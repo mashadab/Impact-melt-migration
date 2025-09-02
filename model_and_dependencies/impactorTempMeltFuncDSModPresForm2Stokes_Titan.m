@@ -134,13 +134,14 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
     
     
     Pi_1 = eta_0 * kc/(mu_f * d^2);      %For updated hydraulic condcutivity of total mass balance
-    Pi_3 = kc*d*rho_f*grav/(mu_f * D_T); %For RHS of mass balance (fluid diffusion over heat diffusion)
+    Pi_3 = kc*d*rho_f*grav/(mu_f * D_T); %For RHS of mass balance (fluid diffusion ov heat diffusion)
     Pi_5 = d^3 * rho_i * grav / (eta_0 * D_T);      %Pi 5 from the notes
     Pi_6 = mixZone;                      %Pi 6 from the notes
     %%%%%%%%%
     
     % non-dimensionalize temperature
     T = (T - T_t)/DT;
+    T_lowest = T(end);
 
     % thermal condutvity in convective ocean, set to maintain vertical
     % isotherm in ocean
@@ -305,8 +306,7 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
     
     %% temporal evolution
     for i = 1:1e9
-        T(T>1) = 1; %Stopping temperature to go beyond 1
-        
+        T(T>1) = 1; T(T<T_lowest) = T_lowest; %Setting margins to T
         % calculate porosity from enthalpy
         [T,phi] = enthMelt(H,mixZone,nonT_fun,phi_fun,TWater_fun);
         H = porNonH_fun(phi,T);
@@ -390,13 +390,22 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
         vy = u(Grid.p.Nfx+1:(Grid.p.Nfx+Grid.p.Nfy));
         vm = [vx;vy];       %velocity of the solid phase, m/s
         vmax= max(vm); %largest solid velocity
-        p  = u((Grid.p.Nfx+Grid.p.Nfy+1):end); %Dimless fluid pressure coupled with gravitational head
+        p  = u((Grid.p.Nfx+Grid.p.Nfy+1):end); %Dimless overpressure
         %vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),1,1,Grid.p) * ( Gp * p + (rho_w/rho_i) * Pi_5 * [zeros(Grid.p.Nfx,1); ones(Grid.p.Nfy,1)]); %calculate the dimless fluid velocity %%%%
         vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),1,1,Grid.p) * ( Gp * p ); %calculate the dimless fluid velocity %%%%
         vfy = vf(Grid.p.Nfx+1:(Grid.p.Nfx+Grid.p.Nfy)); 
         %Forcing the velocity to be zero at the interface
         %vf(Grid.p.dof_f_ymin) = 0;
-        
+        overpressure = p* eta_0*D_T/d^2; %redimensionalizing pressure [Pa]
+
+        %{
+    Pi_1 = eta_0 * kc/(mu_f * d^2);      %For updated hydraulic condcutivity of total mass balance
+    Pi_3 = kc*d*rho_f*grav/(mu_f * D_T); %For RHS of mass balance (fluid diffusion ov heat diffusion)
+    Pi_5 = d^3 * rho_i * grav / (eta_0 * D_T);      %Pi 5 from the notes
+    Pi_6 = mixZone;                      %Pi 6 from the notes
+    %%%%%%%%%
+        %}
+
         p  = p - (rho_f/rho_i) * Pi_5 * Y(:);  %Calculating fluid from overall pressure  %%%%
         vfmax= max(vf); %largest solid velocity        
         % Adaptive time stepping based on competition b/w CFL and Neumann
@@ -413,8 +422,11 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
         %%%%
         
         %if things get crazy
-        dt = min([min(0.5*Grid.p.dx^2/kappa_c),min(Grid.p.dx/vmax),min(Grid.p.dx/vfmax),min(Grid.p.dy/vfmax),min(0.5*Grid.p.dy^2/kappa_c), min(Grid.p.dy/vmax)])*0.001;%*0.001;
-
+        if kc>1e-10
+            dt = min([min(0.5*Grid.p.dx^2/kappa_c),min(Grid.p.dx/vmax),min(Grid.p.dx/vfmax),min(Grid.p.dy/vfmax),min(0.5*Grid.p.dy^2/kappa_c), min(Grid.p.dy/vmax)])*0.01;%*0.001;
+        else
+            dt = min([min(0.5*Grid.p.dx^2/kappa_c),min(Grid.p.dx/vmax),min(Grid.p.dx/vfmax),min(Grid.p.dy/vfmax),min(0.5*Grid.p.dy^2/kappa_c), min(Grid.p.dy/vmax)])*0.1;%*0.001;
+        end 
                 
         %if tTot > 50 %increase CFL by 10 times after 25 years
         %dt = min([min(0.5*Grid.p.dx^2/kappa_c),min(Grid.p.dx/vmax),min(Grid.p.dx/vfmax),min(Grid.p.dy/vfmax),min(0.5*Grid.p.dy^2/kappa_c), min(Grid.p.dy/vmax)])*0.001;
@@ -505,23 +517,26 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
         phiRem = sum(sum(phiGr(ocTh+grRes/5:end,:),1).*Grid.p.V(Grid.p.dof_ymin)' * d^3);
         phiFracRem = [phiFracRem phiRem/phiOrig];
 
+        Tplot(Tplot>1) = 1; Tplot(Tplot<T_lowest) = T_lowest; %Setting margins to T        
+        
         % condition for ending simulation
         if phiFracRem(end) < termFrac || (i > 100000 && phiFracRem(end) > phiFracRem(end-1)) || i >200000 %1500 to 5000
             %  point
-            save(['' fn '_eta0_' num2str(log10(eta_0)) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'kc' num2str(kc) 'C.mat'],...
+            save(['' fn 'overpressure' overpressure '_eta0_' num2str(log10(eta_0)) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'kc' num2str(kc) 'C.mat'],...
                 'Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
                 'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig')
             break
         end
 
            if rem(i,100)==0 || i==1
+               i
                             save(['../Output/' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
                 'Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
                 'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
             end
         
         %% PLOTTING
-         if mod(i,1000) == 0 || i==1
+         if mod(i,100) == 0 || i==1
             tTot
             greens = interp1([0;1],[1 1 1; 0.45, 0.65, 0.38],linspace(0,1,256));
             reds = interp1([0;1],[1 1 1;  190/255  30/255  45/255],linspace(0,1,256));
@@ -548,7 +563,9 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
             a1 = nexttile(tt);
             hold on
             axis normal
+            Tplot(Tplot>1) = 1; Tplot(Tplot<T_lowest) = T_lowest; %Setting margins to T        
             Tplot_dummy=Tplot;
+            
             contourf(-X*d/1e3,Y*d/1e3-Grid.p.dy,Tplot_dummy*DT+T_t,40,'linestyle','none'),view(2),hold on
             %caxis([min(Tplot(:)) max(Tplot(:))]*DT+T_t);
             colormap(gca, reds);  % You can choose a different colormap if desired
@@ -585,90 +602,38 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
             
              
         %% PLOTTING
-         if mod(i,1000) == 0 || i==1
+         if mod(i,100) == 0 || i==1
             greens = interp1([0;1],[1 1 1; 0.45, 0.65, 0.38],linspace(0,1,256));
             reds = interp1([0;1],[1 1 1;  190/255  30/255  45/255],linspace(0,1,256));
             blues = interp1([0;1],[1 1 1; 39/255  170/255  225/255],linspace(0,1,256));
             
              i
-             
-            %{
-            %combined-melt-tracer plot  
-            
-            hhh=figure('Visible', 'off'); %For visibility: h=figure(4);
-            set(gcf,'units','points','position',[0,0,600,600])
-            % Enlarge figure to full screen.
-            %set(gcf, 'Position', [50 50 1500 600])  
-            tt = tiledlayout(1,2);
-            tt.TileSpacing = 'none';
-            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 25; t.FontName = 'Times';   
-            a1 = nexttile(tt);
-            hold on
-            axis normal
-
-            %contour(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),'r','LevelList',5e-2),hold on
-            trc1_plot = trc1; %trc1_plot(trc1<=1e-8) = nan;
-            contourf(-X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(trc1_plot,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2)
-            xlabel('x-dir, km');
-            ylabel('z-dir, km');
-            colormap(gca, greens);
-            c1 = colorbar('SouthOutside');           
-            c1.Label.String = 'Organics Conc., 1';
-            %xlabel('x-dir, km');
-            xlabel('.');
-            ylabel('z-dir, km');
-            set(a1,'box','on','xtick',[-30, -20, -10],'Layer','top');
-            %colormap(ax1,reds);         
-            xlim([-max(X*d/1e3,[],'all'), 0]);
-            ylim([0, max(Y*d/1e3-Grid.p.dy,[],'all')]);
-            axis normal
-            hold on
-            a2 = nexttile(tt);
-            %contourf(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on
-            phi_dummy=phi;  
-            %phi_dummy(phi_dummy<=1e-16) = NaN; 
-            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(phi_dummy,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on
-            colormap(gca, blues);  % You can choose a different colormap if desired
-            c2 = colorbar('SouthOutside');
-            caxis([0 1]);
-            ylim([0, max(Y*d/1e3-Grid.p.dy,[],'all')]);
-            xlim([0,max(X*d/1e3,[],'all')]);
-            set(a2,'box','on','yticklabel',[],'xtick',[0, 10, 20, 30],'Layer','top');
-            xlabel('radius, km');
-            c2.Label.String = 'Melt fraction, 1';          
-%             if i<1500
-            axis normal
-            tt.TileSpacing = 'none';
-            set(gca,'Layer','top')
-            saveas(hhh,sprintf('../figures/organics_newres_test__fig%d_imp_kc%d.png',i,kc)); 
-            saveas(hhh,sprintf('../figures/organics_pdfnewres_test__fig%d_imp_kc%d.pdf',i,kc));
-            %}
-            
             
             %temp-melt plot
-            h=figure('Visible', 'off'); %For visibility: h=figure(4);
+            h=figure('Visible', 'on'); %For visibility: h=figure(4);
             set(gcf,'units','points','position',[0,0,3125,1250])
-            ylim([0, max(Y*d/1e3-Grid.p.dy,[],'all')]);
+            %ylim([0, max(Y*d/1e3-Grid.p.dy,[],'all')]);
             % Enlarge figure to full screen.
             [PSI,psi_min,psi_max] = comp_streamfun(vm,Grid.p);
             set(gcf, 'Position', [50 50 1500 600])
-            ax1 = subplot(1,4,1);
+            ax1 = subplot(1,3,1);
             cla;
             hold on
             axis equal
-            Tplot_dummy=Tplot;
+            Tplot(Tplot>1) = 1; Tplot(Tplot<T_lowest) = T_lowest; %Setting margins to T        
             contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,Tplot*DT+T_t,40,'linestyle','none'),view(2),hold on
             c1 = colorbar('NorthOutside');
             %caxis([min(Tplot(:)) max(Tplot(:))]*DT+T_t);
             cStrVal = linspace(min(PSI(:)),max(PSI(:)),10);
-            contour(Grid.p.xf*d/1e3,Grid.p.yf*d/1e3,PSI,'k','LevelList',cStrVal);
+            %contour(Grid.p.xf*d/1e3,Grid.p.yf*d/1e3,PSI,'k','LevelList',cStrVal);
             c1.Label.String = 'Temperature, K';
             xlabel('x-dir, km');
             ylabel('z-dir, km');
             colormap(ax1,reds);
-
+            clim([T_lowest*DT+T_t T_b]);
+            ylim(ax1,[0, 60]);
             %melt fraction plot
-            ax2 = subplot(1,4,2);
+            ax2 = subplot(1,3,2);
             t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 25;
             cla;
             axis equal
@@ -681,37 +646,22 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
             xlabel('x-dir, km');
             ylabel('z-dir, km');
             c2.Label.String = 'Melt fraction, 1';
-            
-            %Organics tracer location concentration plot  
-            % Create green-to-red colormap
-            ax3 = subplot(1,4,3);
+            ylim(ax2,[0, 60]);
+            %melt fraction plot
+            ax3 = subplot(1,3,3);
             cla;
             axis equal
             hold on
-            c3 = colorbar('NorthOutside');
-            %contour(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),'r','LevelList',5e-2),hold on
-            trc1_plot = trc1; %trc1_plot(trc1<=1e-8) = nan;
-            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(trc1_plot,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2)
+            contourf(X,Y,reshape(overpressure,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on     
+            %contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(phi_dummy,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on
+            c2 = colorbar('NorthOutside');
+            colormap(ax3,'hot');
+            clim([-1e8 1e8])
+            ylim(ax3,[0, 60]);
             xlabel('x-dir, km');
             ylabel('z-dir, km');
-            c3.Label.String = 'Organics Conc., 1';
-            colormap(ax3,greens);
-            
-            %Clathrates tracer location concentration plot
-            % Create green-to-red colormap
-            ax4 = subplot(1,4,4);
-            cla;
-            axis equal
-            hold on
-            c4 = colorbar('NorthOutside');
-            %contour(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),'r','LevelList',5e-2),hold on
-            trc2_plot = trc2; %trc1_plot(trc1<=1e-8) = nan;
-            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(trc2_plot,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2)
-            xlabel('x-dir, km');
-            ylabel('z-dir, km');
-            c4.Label.String = 'Clathrates conc., 1';
-            colormap(ax4,flipud(gray));
-            
+            c2.Label.String = 'Overpressure, Pa';
+            ylim([0 60]);            
 %             if i<1500
             saveas(h,sprintf('../figures/res_fig%dkc%d.png',i, kc)); 
 %             end

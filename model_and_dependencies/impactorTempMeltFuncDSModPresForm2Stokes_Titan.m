@@ -356,7 +356,7 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
         %%%%
         GG = 1; %G from compaction viscosity relation
         mm = 1; %m from compaction viscosity relation
-        Zd_vec =  GG * (1-phi)./(phi+1e-5).^mm - 2/3*(1-phi); %dim-less compaction viscosity
+        Zd_vec =  GG * (1-phi)./(phi+1e-15).^mm - 2/3*(1-phi); %dim-less compaction viscosity
 
         %size(Zd_vec) 
         %size(comp_mean_corners(Zd_vec,-1,Grid.p))
@@ -396,7 +396,7 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
         vfy = vf(Grid.p.Nfx+1:(Grid.p.Nfx+Grid.p.Nfy)); 
         %Forcing the velocity to be zero at the interface
         %vf(Grid.p.dof_f_ymin) = 0;
-        overpressure = p* eta_0*D_T/d^2; %redimensionalizing pressure [Pa]
+        overpressure = p* eta_0*D_T/d^2; %redimensionalizing pressure [Pa] G * mu./ phi.^m .* (Dp * v);      %Solid pressure
 
         %{
     Pi_1 = eta_0 * kc/(mu_f * d^2);      %For updated hydraulic condcutivity of total mass balance
@@ -423,7 +423,7 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
         
         %if things get crazy
         if kc>1e-10
-            dt = min([min(0.5*Grid.p.dx^2/kappa_c),min(Grid.p.dx/vmax),min(Grid.p.dx/vfmax),min(Grid.p.dy/vfmax),min(0.5*Grid.p.dy^2/kappa_c), min(Grid.p.dy/vmax)])*0.01;%*0.001;
+            dt = min([min(0.5*Grid.p.dx^2/kappa_c),min(Grid.p.dx/vmax),min(Grid.p.dx/vfmax),min(Grid.p.dy/vfmax),min(0.5*Grid.p.dy^2/kappa_c), min(Grid.p.dy/vmax)])*0.001;%*0.001;
         else
             dt = min([min(0.5*Grid.p.dx^2/kappa_c),min(Grid.p.dx/vmax),min(Grid.p.dx/vfmax),min(Grid.p.dy/vfmax),min(0.5*Grid.p.dy^2/kappa_c), min(Grid.p.dy/vmax)])*0.1;%*0.001;
         end 
@@ -650,14 +650,15 @@ function impactorTempMeltFuncDSModPresForm2Stokes_Titan(fn,eta_0,E_a,kc)
             %melt fraction plot
             ax3 = subplot(1,3,3);
             cla;
+            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(overpressure,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on     
             axis equal
             hold on
-            contourf(X,Y,reshape(overpressure,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on     
             %contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(phi_dummy,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on
             c2 = colorbar('NorthOutside');
             colormap(ax3,'hot');
-            clim([-1e8 1e8])
+            clim([0 1e8])
             ylim(ax3,[0, 60]);
+            xlim(ax3,[0, 20]);
             xlabel('x-dir, km');
             ylabel('z-dir, km');
             c2.Label.String = 'Overpressure, Pa';

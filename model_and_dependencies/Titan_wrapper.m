@@ -1,4 +1,5 @@
 %% demo for selk crater simulation
+cd(fileparts(mfilename('fullpath')))
 clear all; close all;
 %% model parameters
 % manannan crater key from Cox and Bauer, 2015 simulations

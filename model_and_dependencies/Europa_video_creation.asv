@@ -26,7 +26,7 @@ inds_arr = [1,100:100:5000];
 
 
 %% Video setup
- v = VideoWriter(sprintf("../figures/phi1e-16Europa03321_eta0_14kc1.85e-%s_Ea_50_output_%dC.mp4",num2str(kc_OM)),'MPEG-4');
+ v = VideoWriter(sprintf("../figures/Europa03321_eta0_14kc1.85e-%s_Ea_50_output_%dC.mp4",num2str(kc_OM)),'MPEG-4');
 v.FrameRate = 20;
 open(v);
 
@@ -63,6 +63,7 @@ for k = 1:length(inds_arr)
     % Add colorbar for temperature
     cb1 = colorbar(ax1,'westoutside');
     title(ax1,'Temperature [K]   \quad  \quad \quad  Melt Fraction','FontSize',20,'FontWeight','bold');
+    %}
 
         %{
         % ---------- TEMPERATURE AXES (left half) ----------

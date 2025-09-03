@@ -24,7 +24,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
     set(groot,'defaulttextinterpreter','latex')
     set(groot,'defaultAxesTickLabelInterpreter','latex')
     set(groot,'defaultLegendInterpreter','latex')
-    set(groot, 'DefaultFigureVisible', 'off');
+    set(groot, 'DefaultFigureVisible', 'on');
     warning off; % matrix is close to singular due to viscosity contrast
     %% Load initial condition to be evolved
     % make ice shell thickness based on impact code passed from iSALE
@@ -314,7 +314,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         %%%%
         GG = 1; %G from compaction viscosity relation
         mm = 1; %m from compaction viscosity relation
-        Zd_vec =  GG * (1-phi)./(phi+1e-5).^mm - 2/3*(1-phi); %dim-less compaction viscosity
+        Zd_vec =  GG * (1-phi)./(phi+1e-15).^mm - 2/3*(1-phi); %dim-less compaction viscosity
 
         %size(Zd_vec) 
         %size(comp_mean_corners(Zd_vec,-1,Grid.p))
@@ -355,9 +355,13 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         p  = p - (rho_f/rho_i) * Pi_5 * Y(:);  %Calculating fluid from overall pressure  %%%%
         vfmax= max(abs(vf)); %largest solid velocity        
         
+
+        overpressure = GG * spdiags((1./(phi+1e-15).^mm),0,Grid.p.N,Grid.p.N) * (Dp * vm) *eta_0*D_T/d^2 ; %redimensionalizing overpressure [Pa] G * mu./ phi.^m .* (Dp * v);      %Solid pressure
+        %   GG * (1-phi)./(phi+1e-15).^mm * Dp * vm
+
         % Adaptive time stepping based on competition b/w CFL and Neumann
         % conditions in each direction; CFL number set to 0.8
-        dt = max(min([min(0.5*Grid.p.dx^2/kappa_c),min(Grid.p.dx/vmax),min(Grid.p.dx/vfmax),min(Grid.p.dy/vfmax),min(0.5*Grid.p.dy^2/kappa_c), min(Grid.p.dy/vmax)]))*0.1;
+        dt = max(min([min(0.5*Grid.p.dx^2/kappa_c),min(Grid.p.dx/vmax),min(Grid.p.dx/vfmax),min(Grid.p.dy/vfmax),min(0.5*Grid.p.dy^2/kappa_c), min(Grid.p.dy/vmax)]));
         
         %% non-linear thermal conducitivity matricies
         kappaPrime = porKappaPrime_fun(phi,T); %thermal conductivity, K
@@ -439,8 +443,9 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         phiRem = sum(sum(phiGr(ocTh+grRes/5:end,:),1).*Grid.p.V(Grid.p.dof_ymin)' * d^3);
         phiFracRem = [phiFracRem phiRem/phiOrig];
 
+        
         % condition for ending simulation
-        if phiFracRem(end) < termFrac || (i > 1000 && phiFracRem(end) > phiFracRem(end-1)) || i >100000 %1500 to 5000
+        if phiFracRem(end) < termFrac || (i > 10000 && phiFracRem(end) > phiFracRem(end-1)) || i >100000 %1500 to 5000
             %  point
             save(['' fn '_eta0_' num2str(log10(eta_0)) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'kc' num2str(kc) 'C.mat'],...
                 'Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
@@ -456,12 +461,12 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             
              i
             %streamfunction plot
-            h=figure('Visible', 'off'); %For visibility: h=figure(4);
+            h=figure('Visible', 'on'); %For visibility: h=figure(4);
             set(gcf,'units','points','position',[0,0,3125,1250])
             % Enlarge figure to full screen.
             [PSI,psi_min,psi_max] = comp_streamfun(vm,Grid.p);
             set(gcf, 'Position', [50 50 1500 600])
-            ax1 = subplot(1,2,1);
+            ax1 = subplot(1,3,1);
             cla;
             hold on
             axis equal
@@ -475,9 +480,9 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             xlabel('x-dir, km');
             ylabel('z-dir, km');
             colormap(ax1,reds);
-
+            clim([T_t T_b])
             %melt fraction plot
-            ax2 = subplot(1,2,2);
+            ax2 = subplot(1,3,2);
             t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 25;
             cla;
             axis equal
@@ -490,10 +495,25 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             xlabel('x-dir, km');
             ylabel('z-dir, km');
             c2.Label.String = 'Melt fraction, 1';
+
+
+            %melt fraction plot
+            ax3 = subplot(1,3,3);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 25;
+            cla;
+            axis equal
+            hold on
+            %contourf(X,Y,log10(abs(reshape(overpressure,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on       
+            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,log(abs(reshape(overpressure,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on
+            c2 = colorbar('NorthOutside');
+            colormap(ax3,'hot');
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            c2.Label.String = 'log[Overpressure], log Pa';
             
             if rem(i,100)==0 || i==1
                             save(['../Output/Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
-                'Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
+                'overpressure','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
                 'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
             end
 
@@ -511,7 +531,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 %%%%
 %% Making a video out of frames
  % create the video writer with fps of the original video
- Data_result= sprintf('../figures/case%s_t%syrs.avi',num2str(fn),num2str(tTot));
+ Data_result= sprintf('../figures/Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));
  writerObj = VideoWriter(Data_result);
  writerObj.FrameRate = 20; % set the seconds per image
  open(writerObj); % open the video writer

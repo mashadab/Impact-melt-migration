@@ -14,7 +14,7 @@ function [A] = flux_upwind(q,Grid)
 % Example call:
 % >> Grid.xmin = 0; Grid.xmax = 1; Grid.Nx = 10;
 % >> Grid = build_grid(Grid);
-% >> q = ones(Grid.Nf,1);S
+% >> q = ones(Grid.Nf,1);
 % >> [A] = flux_upwind(q,Grid);
 
 Nx = Grid.Nx; Ny = Grid.Ny; Nz = Grid.Nz; N = Grid.N;

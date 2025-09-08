@@ -20,7 +20,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
     %}
 
     set(groot,'defaultAxesFontName','Times')
-    set(groot,'defaultAxesFontSize',20)
+    set(groot,'defaultAxesFontSize',14)
     set(groot,'defaulttextinterpreter','latex')
     set(groot,'defaultAxesTickLabelInterpreter','latex')
     set(groot,'defaultLegendInterpreter','latex')
@@ -70,6 +70,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
     %barrViscPhi = @(nonT,phi) max(exp(Apar*(T_b./(DT.*nonT+T_t)-1)).*exp(-porViscPar*phi),1e-2);
     %barrViscPhi = @(nonT,phi) max(exp(Apar*(T_b./(DT.*nonT+T_t)-1)).*exp(-porViscPar*phi).*(1-phi),1e-5); %%%%New viscosity of solid (1-phi)*mu_s
     %barrViscPhi = @(nonT,phi) max(exp(Apar*(T_b./(DT.*nonT+T_t)-1)).*exp(-porViscPar*phi),1e-2); %Old viscosity
+    ViscTempPhi = @(nonT,phi) max(exp(Apar*(T_b./(DT.*nonT+T_t)-1)).*exp(-porViscPar*phi),1e-5); %viscosity with temperature variation with water softening
     barrViscPhi = @(nonT,phi) max(exp(Apar*(T_b./(DT.*nonT+T_t)-1).*(1-phi)).*exp(-porViscPar*phi),1e-5); %Old viscosity with water softening
     % viscosity is max of Temp dependence on viscosity, melt dependence, threshold
     % threshold 1e-2 means two orders of magnitude reduction is essentially inviscid
@@ -314,7 +315,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         %%%%
         GG = 1; %G from compaction viscosity relation
         mm = 1; %m from compaction viscosity relation
-        Zd_vec =  GG * (1-phi)./(phi+1e-15).^mm - 2/3*(1-phi); %dim-less compaction viscosity
+        Zd_vec = ( GG * (1-phi)./(phi+1e-5).^mm - 2/3*(1-phi)).*ViscTempPhi(Tplot(:),phi); %dim-less compaction viscosity
 
         %size(Zd_vec) 
         %size(comp_mean_corners(Zd_vec,-1,Grid.p))
@@ -356,7 +357,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         vfmax= max(abs(vf)); %largest solid velocity        
         
 
-        overpressure = GG * spdiags((1./(phi+1e-15).^mm),0,Grid.p.N,Grid.p.N) * (Dp * vm) *eta_0*D_T/d^2 ; %redimensionalizing overpressure [Pa] G * mu./ phi.^m .* (Dp * v);      %Solid pressure
+        overpressure = GG * spdiags((1./(phi+1e-5).^mm) .* ViscTempPhi(Tplot(:),phi),0,Grid.p.N,Grid.p.N) * (Dp * vm) *eta_0*D_T/d^2 ; %redimensionalizing overpressure [Pa] G * mu./ phi.^m .* (Dp * v);      %Solid pressure
         %   GG * (1-phi)./(phi+1e-15).^mm * Dp * vm
 
         % Adaptive time stepping based on competition b/w CFL and Neumann
@@ -445,7 +446,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 
         
         % condition for ending simulation
-        if phiFracRem(end) < termFrac || (i > 10000 && phiFracRem(end) > phiFracRem(end-1)) || i >100000 %1500 to 5000
+        if phiFracRem(end) < termFrac || (i > 10000 && phiFracRem(end) > phiFracRem(end-1)) || i>200%i >100000 %1500 to 5000
             %  point
             save(['' fn '_eta0_' num2str(log10(eta_0)) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'kc' num2str(kc) 'C.mat'],...
                 'Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
@@ -454,12 +455,13 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         end
     
         %% PLOTTING
-         if mod(i,100) == 0  || i==1
+         if mod(i,20) == 0  || i==1
             greens = interp1([0;1],[1 1 1; 0.45, 0.65, 0.38],linspace(0,1,256));
             reds = interp1([0;1],[1 1 1;  190/255  30/255  45/255],linspace(0,1,256));
             blues = interp1([0;1],[1 1 1; 39/255  170/255  225/255],linspace(0,1,256));
             
              i
+             %{
             %streamfunction plot
             h=figure('Visible', 'on'); %For visibility: h=figure(4);
             set(gcf,'units','points','position',[0,0,3125,1250])
@@ -483,7 +485,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             clim([T_t T_b])
             %melt fraction plot
             ax2 = subplot(1,3,2);
-            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 25;
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
             cla;
             axis equal
             hold on
@@ -496,20 +498,208 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             ylabel('z-dir, km');
             c2.Label.String = 'Melt fraction, 1';
 
-
             %melt fraction plot
             ax3 = subplot(1,3,3);
-            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 25;
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
             cla;
             axis equal
             hold on
-            %contourf(X,Y,log10(abs(reshape(overpressure,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on       
-            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,log(abs(reshape(overpressure,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on
+            phi_sign = ones(size(phi)); phi_sign(phi<1e-6) = 0;
+            %oneminusphi_sign = ones(size(phi)); oneminusphi_sign(1-phi<1e-6) = 0;            
+            %overpressure_two_phase = phi_sign.*oneminusphi_sign.*overpressure;
+            overpressure_two_phase = overpressure;
+            %overpressure_two_phase(overpressure_two_phase==0) = nan;
+            contourf(X*d/1e3,Y*d/1e3,log10(abs(reshape(overpressure,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on       
+            %contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,((reshape(overpressure_two_phase,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on
             c2 = colorbar('NorthOutside');
             colormap(ax3,'hot');
             xlabel('x-dir, km');
             ylabel('z-dir, km');
             c2.Label.String = 'log[Overpressure], log Pa';
+            %}
+            
+            
+            %clim([0 10])
+
+
+                       %streamfunction plot
+            h=figure('Visible', 'on'); %For visibility: h=figure(4);
+            set(gcf,'units','points','position',[0,0,3125,1250])
+            % Enlarge figure to full screen.
+            [PSI,psi_min,psi_max] = comp_streamfun(vm,Grid.p);
+            set(gcf, 'Position', [50 50 1500 600])
+
+            ax1 = subplot(3,3,1);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+            cla;
+            hold on
+            axis equal
+            Tplot_dummy=Tplot;
+            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,Tplot*DT+T_t,40,'linestyle','none'),view(2),hold on
+            c1 = colorbar('NorthOutside');
+            caxis([min(Tplot(:)) max(Tplot(:))]*DT+T_t);
+            cStrVal = linspace(min(PSI(:)),max(PSI(:)),10);
+            %contour(Grid.p.xf*d/1e3,Grid.p.yf*d/1e3,PSI,'k','LevelList',cStrVal);
+            c1.Label.String = 'Temperature, K';
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            colormap(ax1,reds);
+            clim([T_t T_b])
+
+
+
+            %melt fraction plot
+            ax2 = subplot(3,3,2);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+            cla;
+            axis equal
+            hold on
+            contourf(X,Y,reshape(phi,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on
+            phi_dummy=phi;       
+            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,reshape(phi_dummy,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on
+            c2 = colorbar('NorthOutside');
+            colormap(ax2,blues);
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            c2.Label.String = 'Melt fraction, 1';
+
+            %melt fraction plot
+            ax3 = subplot(3,3,3);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+            cla;
+            axis equal
+            hold on
+            phi_sign = ones(size(phi)); phi_sign(phi<1e-6) = 0;
+            contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,log10(abs(reshape(p*eta_0*D_T/d^2,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on
+            c2 = colorbar('NorthOutside');
+            colormap(ax3,'hot');
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            c2.Label.String = 'log_{10} Fluid pressure, log_{10} Pa';
+            clim([0 7])
+
+            %melt fraction plot
+            ax3 = subplot(3,3,4);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+            cla;
+            axis equal
+            hold on
+            phi_sign = ones(size(phi)); phi_sign(phi<1e-6) = 0;
+            %oneminusphi_sign = ones(size(phi)); oneminusphi_sign(1-phi<1e-6) = 0;            
+            %overpressure_two_phase = phi_sign.*oneminusphi_sign.*overpressure;
+            contourf(X*d/1e3,Y*d/1e3,log10(abs(reshape(overpressure,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on       
+            
+            c2 = colorbar('NorthOutside');
+            colormap(ax3,'hot');
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            c2.Label.String = 'log_{10}|Overpressure|, log_{10} Pa';
+
+            %velocity difference plot
+            ax5 = subplot(3,3,5);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+            cla;
+            axis equal
+            hold on
+            phi_sign = ones(size(phi)); phi_sign(phi<1e-6) = 0;
+            %oneminusphi_sign = ones(size(phi)); oneminusphi_sign(1-phi<1e-6) = 0;            
+            %overpressure_two_phase = phi_sign.*oneminusphi_sign.*overpressure;
+            Mp = Dp; Mp(Mp~=0)=0.5;%Mean matrix adhoc to find cell center values without boundary treatment
+            Mp(:,1:Grid.p.Nfx) = 0;
+            contourf(X*d/1e3,Y*d/1e3,reshape(D_T/d*Mp*vf,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on       
+            
+            c2 = colorbar('NorthOutside');
+            colormap(ax5,'hot');
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            c2.Label.String = 'v_w in y-dir, m/s';
+ 
+            %velocity difference plot
+            ax6 = subplot(3,3,6);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+            cla;
+            axis equal
+            hold on
+            Mp = Dp; Mp(Mp~=0)=0.5;%Mean matrix adhoc to find cell center values without boundary treatment
+            Mp(:,1:Grid.p.Nfx) = 0;
+            vy_only = vf - vm; %vy_only(1:Grid.p.Nfx) = 0;
+            contourf(X*d/1e3,Y*d/1e3,reshape(D_T/d*Mp*vy_only,Grid.p.Ny,Grid.p.Nx),40,'linestyle','none'),view(2),hold on       
+            
+            c2 = colorbar('NorthOutside');
+            colormap(ax6,'hot');
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            c2.Label.String = 'v_w - v_i in y-dir, m/s';
+
+            %strain rates of ice phase
+
+            EE = Edot*vm;
+            Exx = EE(1:Grid.x.Nfx,:); Eyy = EE(Grid.x.Nfx+1:Grid.x.Nfx+Grid.y.Nfy,:); Exy = EE(Grid.x.Nfx+Grid.y.Nfy+1:end,:);
+            Exx = reshape(Exx,Gridp.Ny,Gridp.Nx+2); Eyy = reshape(Eyy,Gridp.Ny+2,Gridp.Nx); Exy = reshape(Exy,Gridp.Ny+1,Gridp.Nx+1); 
+
+            [Xf,Yf] = meshgrid(Grid.p.xf,Grid.p.yf);
+
+             
+            oneminusphi_sign = ones(size(phi)); oneminusphi_sign(1-phi<1e-4) = nan; 
+            oneminusphi_sign = reshape(oneminusphi_sign,Grid.p.Ny,Grid.p.Nx);
+            ax7 = subplot(3,3,7);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+            cla;
+            axis equal
+            hold on
+            contourf(X*d/1e3,Y*d/1e3,log10(D_T/d^2*abs(oneminusphi_sign.*Exx(:,2:end-1))),40,'linestyle','none'),view(2),hold on       
+            
+            c2 = colorbar('NorthOutside');
+            %colormap(ax7,'hot');
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            c2.Label.String = 'log_{10}|\epsilon_{xx}|, log_{10} 1/s';
+
+
+            ax8 = subplot(3,3,8);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+            cla;
+            axis equal
+            hold on
+            contourf(X*d/1e3,Y*d/1e3,log10(D_T/d^2*abs(oneminusphi_sign.*Eyy(2:end-1,:))),40,'linestyle','none'),view(2),hold on         
+            
+            c2 = colorbar('NorthOutside');
+            %colormap(ax8,'hot');
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            c2.Label.String = 'log_{10}|\epsilon_{yy}|, log_{10} 1/s';
+
+            ax8 = subplot(3,3,9);
+             
+            oneminusphi_sign = ones(size(ncVecPhi)); oneminusphi_sign(1-ncVecPhi<1e-4) = nan; 
+            oneminusphi_sign = reshape(oneminusphi_sign,Grid.p.Ny+1,Grid.p.Nx+1);
+            t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+            cla;
+            axis equal
+            hold on
+            contourf(Xf*d/1e3,Yf*d/1e3,log10(D_T/d^2*abs(oneminusphi_sign.*Exy)),40,'linestyle','none'),view(2),hold on       
+            
+            c2 = colorbar('NorthOutside');
+            %colormap(ax8,'hot');
+            xlabel('x-dir, km');
+            ylabel('z-dir, km');
+            c2.Label.String = 'log_{10}|\epsilon_{xy}|, log_{10} 1/s';
+           
+
+%             %melt fraction plot
+%             ax3 = subplot(1,3,3);
+%             t = sgtitle(sprintf('time=%.3f years',tTot)); t.FontSize = 20;
+%             cla;
+%             axis equal
+%             hold on
+%             %contourf(X,Y,log10(abs(reshape(overpressure,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on       
+%             contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,log10(abs(reshape(overpressure,Grid.p.Ny,Grid.p.Nx))),40,'linestyle','none'),view(2),hold on
+%             c2 = colorbar('NorthOutside');
+%             colormap(ax3,'hot');
+%             xlabel('x-dir, km');
+%             ylabel('z-dir, km');
+%             c2.Label.String = 'log[Overpressure], log Pa';
+%             clim([0 10])
             
             if rem(i,100)==0 || i==1
                             save(['../Output/Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...

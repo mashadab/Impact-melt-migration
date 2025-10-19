@@ -24,7 +24,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
     set(groot,'defaulttextinterpreter','latex')
     set(groot,'defaultAxesTickLabelInterpreter','latex')
     set(groot,'defaultLegendInterpreter','latex')
-    set(groot, 'DefaultFigureVisible', 'on');
+    set(groot, 'DefaultFigureVisible', 'off');
     warning off; % matrix is close to singular due to viscosity contrast
     %% Load initial condition to be evolved
     % make ice shell thickness based on impact code passed from iSALE
@@ -322,7 +322,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         Zd = spdiags(Zd_vec,0,Grid.p.N,Grid.p.N);   %transforming into a matrix
         nn  = 3; %porosity-permeability relation
         
-        Kdprime_vec = comp_mean(phiPlot.^nn,1,1,Grid.p);
+        Kdprime_vec = comp_mean(phiPlot.^nn,-1,1,Grid.p);
         Kdprime = spdiags(Kdprime_vec,0,length(Kdprime_vec),length(Kdprime_vec)); %dimensional permeability
 
         fs_fluid_pressure =  - Pi_5 * (rho_f/rho_i) * ones(Grid.p.Nfy,1);  %Extra source term from Pf
@@ -351,13 +351,14 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         vmax= max(abs(vm)); %largest solid velocity
         p  = u((Grid.p.Nfx+Grid.p.Nfy+1):end); %Dimless fluid pressure coupled with gravitational head
         %vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),1,1,Grid.p) * ( Gp * p + (rho_w/rho_i) * Pi_5 * [zeros(Grid.p.Nfx,1); ones(Grid.p.Nfy,1)]); %calculate the dimless fluid velocity %%%%
-        vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),1,1,Grid.p) * ( Gp * p ); %calculate the dimless fluid velocity %%%%
+        vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),-1,1,Grid.p) * ( Gp * p ); %calculate the dimless fluid velocity %%%%
         vfy = vf(Grid.p.Nfx+1:(Grid.p.Nfx+Grid.p.Nfy)); %y-directional fluid velocity
+
         p  = p - (rho_f/rho_i) * Pi_5 * Y(:);  %Calculating fluid from overall pressure  %%%%
         vfmax= max(abs(vf)); %largest solid velocity        
         
 
-        overpressure = GG * spdiags((1./(phi+1e-5).^mm) .* ViscTempPhi(Tplot(:),phi),0,Grid.p.N,Grid.p.N) * (Dp * vm) *eta_0*D_T/d^2 ; %redimensionalizing overpressure [Pa] G * mu./ phi.^m .* (Dp * v);      %Solid pressure
+        overpressure = GG * spdiags((1./(phi+1e-15).^mm) .* ViscTempPhi(Tplot(:),phi),0,Grid.p.N,Grid.p.N) * (Dp * vm) *eta_0*D_T/d^2 ; %redimensionalizing overpressure [Pa] G * mu./ phi.^m .* (Dp * v);      %Solid pressure
         %   GG * (1-phi)./(phi+1e-15).^mm * Dp * vm
 
         % Adaptive time stepping based on competition b/w CFL and Neumann
@@ -374,10 +375,18 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
                 
         %% Advection of enthalpy, diffusion of temperature
         %AH = build_adv_op(vm,H,dt,Gp,Grid.p,Param.H,'mc')*H; %Upwinding the enthalpy from center to faces
+        %Old approach (do not average)
         AHs = build_adv_op(vm,(1-phi).*(T-1),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1)); %Upwinding the solid enthalpy from center to faces %%%%%%%
         AHf = build_adv_op(vf,phi*Pi_6,dt,Gp,Grid.p,Param.H,'mc')*(phi*Pi_6); %Upwinding the fluid enthalpy from center to faces %%%%%%%
         AH  = AHs + AHf; %Combine the advection operator
-        
+
+        %New approach
+        phi_face_vec = comp_mean(phiPlot,1,1,Grid.p)*ones(Grid.p.Nf,1);
+        v_tot = vm.*(1-phi_face_vec) + vf.*phi_face_vec;  %%%% This is where we need to add more variation in velocity        
+        AHnew2 = build_adv_op(v_tot,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
+        %norm(AH - AHnew2)
+        AH = AHnew2;
+
         %AHnew2 = build_adv_op(vm,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
         %AHnew3 = (build_adv_op(vm,(1-phi).*(T-1),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1))+build_adv_op(vm,phi*Pi_6,dt,Gp,Grid.p,Param.H,'mc')*(phi*Pi_6))
         %norm(H - ((1-phi).*(T-1) + phi*Pi_6))
@@ -446,7 +455,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 
         
         % condition for ending simulation
-        if phiFracRem(end) < termFrac || (i > 10000 && phiFracRem(end) > phiFracRem(end-1)) || i>200%i >100000 %1500 to 5000
+        if phiFracRem(end) < termFrac || (i > 10000 && phiFracRem(end) > phiFracRem(end-1)) || i>10000%i >100000 %1500 to 5000
             %  point
             save(['' fn '_eta0_' num2str(log10(eta_0)) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'kc' num2str(kc) 'C.mat'],...
                 'Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
@@ -455,7 +464,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         end
     
         %% PLOTTING
-         if mod(i,20) == 0  || i==1
+         if mod(i,100) == 0  || i==1
             greens = interp1([0;1],[1 1 1; 0.45, 0.65, 0.38],linspace(0,1,256));
             reds = interp1([0;1],[1 1 1;  190/255  30/255  45/255],linspace(0,1,256));
             blues = interp1([0;1],[1 1 1; 39/255  170/255  225/255],linspace(0,1,256));
@@ -523,7 +532,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 
 
                        %streamfunction plot
-            h=figure('Visible', 'on'); %For visibility: h=figure(4);
+            h=figure('Visible', 'off'); %For visibility: h=figure(4);
             set(gcf,'units','points','position',[0,0,3125,1250])
             % Enlarge figure to full screen.
             [PSI,psi_min,psi_max] = comp_streamfun(vm,Grid.p);
@@ -576,7 +585,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
             xlabel('x-dir, km');
             ylabel('z-dir, km');
             c2.Label.String = 'log_{10} Fluid pressure, log_{10} Pa';
-            clim([0 7])
+            clim([6 7])
 
             %melt fraction plot
             ax3 = subplot(3,3,4);
@@ -702,13 +711,13 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 %             clim([0 10])
             
             if rem(i,100)==0 || i==1
-                            save(['../Output/Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
-                'overpressure','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
+                            save(['../Output/net_vel_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
+                'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
                 'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
             end
 
             %if i<1500
-            saveas(h,sprintf('../figures/Europa_res_fig%dkc%d.png',i, kc));          
+            saveas(h,sprintf('../figures/net_vel_Europa_res_fig%dkc%d.png',i, kc));          
             %end
    
             
@@ -723,7 +732,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
  % create the video writer with fps of the original video
  Data_result= sprintf('../figures/Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));
  writerObj = VideoWriter(Data_result);
- writerObj.FrameRate = 20; % set the seconds per image
+ writerObj.FrameRate = 5; % set the seconds per image
  open(writerObj); % open the video writer
 % write the frames to the video
 for i=1:frameno

@@ -14,6 +14,7 @@ kc = 1.85e-08; %Absolute permeability [in m^2]
 %    viscosity_activation_energy,kc) %main driver routine
 
 
-% Testing: 'arithmetic_permeability','combined_vel', 'temperate'
+% Testing: 'art_perm': arithmetic_permeability,'comb_vel':combined
+% velocity, 'temprate': temperate ice sheet
 impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(cox_and_bauer_impact_key,basal_viscosity, ...
-    viscosity_activation_energy,kc, 'temperate') %main driver routine
+    viscosity_activation_energy,kc, 'temprate') %main driver routine

@@ -1,4 +1,4 @@
-function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,kc)
+function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,E_a,kc,test)
     %{
     Function to evolve impact melt chambers on Europa. Simulations end
     when there is a negligible amount of melt left from the impact. The
@@ -148,6 +148,10 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
     
     % combine ice shell and ocean to get the entire domain fields
     TGr = [TOc; TGr]; %Temperature, K
+
+    if test == 'temperate'
+        TGr = TGr * 0 + 1;  %making the temperature 1 everywhere
+    end 
     
     phiGr = [phiOc; phiGr]; %Porosity or melt fraction
     phiGr(Y<0.25) = 0;  %%%%new line
@@ -322,7 +326,11 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         Zd = spdiags(Zd_vec,0,Grid.p.N,Grid.p.N);   %transforming into a matrix
         nn  = 3; %porosity-permeability relation
         
-        Kdprime_vec = comp_mean(phiPlot.^nn,-1,1,Grid.p);
+        if test == 'arithmetic_permeability'
+            Kdprime_vec = comp_mean(phiPlot.^nn, 1,1,Grid.p);
+        else 
+            Kdprime_vec = comp_mean(phiPlot.^nn,-1,1,Grid.p);
+        end
         Kdprime = spdiags(Kdprime_vec,0,length(Kdprime_vec),length(Kdprime_vec)); %dimensional permeability
 
         fs_fluid_pressure =  - Pi_5 * (rho_f/rho_i) * ones(Grid.p.Nfy,1);  %Extra source term from Pf
@@ -351,7 +359,11 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         vmax= max(abs(vm)); %largest solid velocity
         p  = u((Grid.p.Nfx+Grid.p.Nfy+1):end); %Dimless fluid pressure coupled with gravitational head
         %vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),1,1,Grid.p) * ( Gp * p + (rho_w/rho_i) * Pi_5 * [zeros(Grid.p.Nfx,1); ones(Grid.p.Nfy,1)]); %calculate the dimless fluid velocity %%%%
-        vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),-1,1,Grid.p) * ( Gp * p ); %calculate the dimless fluid velocity %%%%
+        if test == 'arithmetic_permeability'
+            vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1), 1,1,Grid.p) * ( Gp * p ); %calculate the dimless fluid velocity %%%%
+        else
+            vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),-1,1,Grid.p) * ( Gp * p ); %calculate the dimless fluid velocity %%%%
+        
         vfy = vf(Grid.p.Nfx+1:(Grid.p.Nfx+Grid.p.Nfy)); %y-directional fluid velocity
 
         p  = p - (rho_f/rho_i) * Pi_5 * Y(:);  %Calculating fluid from overall pressure  %%%%
@@ -385,8 +397,10 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         v_tot = vm.*(1-phi_face_vec) + vf.*phi_face_vec;  %%%% This is where we need to add more variation in velocity        
         AHnew2 = build_adv_op(v_tot,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
         %norm(AH - AHnew2)
-        %AH = AHnew2;
-
+        %
+        if test == 'combined_vel'
+            AH = AHnew2;
+        end 
         %AHnew2 = build_adv_op(vm,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
         %AHnew3 = (build_adv_op(vm,(1-phi).*(T-1),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1))+build_adv_op(vm,phi*Pi_6,dt,Gp,Grid.p,Param.H,'mc')*(phi*Pi_6))
         %norm(H - ((1-phi).*(T-1) + phi*Pi_6))
@@ -711,13 +725,46 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 %             clim([0 10])
             
             if rem(i,100)==0 || i==1
-                            save(['../Output/diff_vel_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
-                'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
-                'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
+
+                if test == 'arithmetic_permeability'                
+
+                                save(['../Output/arth_perm_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
+                    'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
+                    'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
+
+                elseif test == 'combined_vel'
+
+                                save(['../Output/combined_vel_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
+                    'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
+                    'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
+
+                elseif test == 'temperate'
+
+                                save(['../Output/temperate_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
+                    'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
+                    'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
+                else 
+                                save(['../Output/original_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
+                    'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
+                    'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
+
+                end 
             end
 
+
+                if test == 'arithmetic_permeability'                
+                    saveas(h,sprintf('../figures/arth_perm_Europa_res_fig%dkc%d.png',i, kc));   
+                elseif test == 'combined_vel'
+                    saveas(h,sprintf('../figures/combined_vel_Europa_res_fig%dkc%d.png',i, kc));   
+                elseif test == 'temperate'
+                    saveas(h,sprintf('../figures/temperate_Europa_res_fig%dkc%d.png',i, kc));   
+                else 
+                    saveas(h,sprintf('../figures/original_Europa_res_fig%dkc%d.png',i, kc));   
+
+                end 
+
             %if i<1500
-            saveas(h,sprintf('../figures/diff_vel_Europa_res_fig%dkc%d.png',i, kc));          
+       
             %end
    
             
@@ -730,7 +777,19 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 %%%%
 %% Making a video out of frames
  % create the video writer with fps of the original video
- Data_result= sprintf('../figures/diff_vel_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));
+
+if test == 'arithmetic_permeability'                
+    Data_result= sprintf('../figures/arth_perm_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot)); 
+elseif test == 'combined_vel'
+    Data_result= sprintf('../figures/combined_vel_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));  
+elseif test == 'temperate'
+    Data_result= sprintf('../figures/temperate_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));  
+else 
+    Data_result= sprintf('../figures/original_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));  
+
+end 
+
+
  writerObj = VideoWriter(Data_result);
  writerObj.FrameRate = 5; % set the seconds per image
  open(writerObj); % open the video writer

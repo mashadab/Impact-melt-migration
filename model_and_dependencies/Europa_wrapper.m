@@ -10,5 +10,10 @@ viscosity_activation_energy = 50e3; % viscosity activation energy
 kc = 1.85e-08; %Absolute permeability [in m^2] 
 
 %% model run simulation
-impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(cox_and_bauer_impact_key,basal_viscosity, ...
-    viscosity_activation_energy,kc) %main driver routine
+%impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(cox_and_bauer_impact_key,basal_viscosity, ...
+%    viscosity_activation_energy,kc) %main driver routine
+
+
+% Testing: 'arithmetic_permeability','combined_vel', 'temperate'
+impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(cox_and_bauer_impact_key,basal_viscosity, ...
+    viscosity_activation_energy,kc, 'temperate') %main driver routine

@@ -385,7 +385,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         v_tot = vm.*(1-phi_face_vec) + vf.*phi_face_vec;  %%%% This is where we need to add more variation in velocity        
         AHnew2 = build_adv_op(v_tot,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
         %norm(AH - AHnew2)
-        AH = AHnew2;
+        %AH = AHnew2;
 
         %AHnew2 = build_adv_op(vm,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
         %AHnew3 = (build_adv_op(vm,(1-phi).*(T-1),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1))+build_adv_op(vm,phi*Pi_6,dt,Gp,Grid.p,Param.H,'mc')*(phi*Pi_6))
@@ -711,13 +711,13 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 %             clim([0 10])
             
             if rem(i,100)==0 || i==1
-                            save(['../Output/net_vel_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
+                            save(['../Output/diff_vel_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
                 'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
                 'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
             end
 
             %if i<1500
-            saveas(h,sprintf('../figures/net_vel_Europa_res_fig%dkc%d.png',i, kc));          
+            saveas(h,sprintf('../figures/diff_vel_Europa_res_fig%dkc%d.png',i, kc));          
             %end
    
             
@@ -730,7 +730,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 %%%%
 %% Making a video out of frames
  % create the video writer with fps of the original video
- Data_result= sprintf('../figures/Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));
+ Data_result= sprintf('../figures/diff_vel_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));
  writerObj = VideoWriter(Data_result);
  writerObj.FrameRate = 5; % set the seconds per image
  open(writerObj); % open the video writer

@@ -1,0 +1,20 @@
+# Generated simulation results and working files
+/Output/*
+/figures/*
+/tmp/
+*.asv
+*.log
+__pycache__/
+*.py[cod]
+.DS_Store
+._*
+
+# Legacy solver output written beside the source
+/model_and_dependencies/*_output_*.mat
+
+# Local wave simulation histories and rendered media (source CSV inputs are kept)
+/model_and_dependencies/porosity-wave-test/MATLAB/*.mat
+/model_and_dependencies/porosity-wave-test/MATLAB/*.avi
+/model_and_dependencies/porosity-wave-test/MATLAB/*.png
+/model_and_dependencies/porosity-wave-test/MATLAB/Jake_2D_porosity_wave/
+/model_and_dependencies/porosity-wave-test/MATLAB/porosity-wave-init.zip

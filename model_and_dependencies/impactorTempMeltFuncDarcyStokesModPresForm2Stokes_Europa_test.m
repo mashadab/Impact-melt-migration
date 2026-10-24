@@ -272,6 +272,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,
         
         % calculate porosity from enthalpy
         [T,phi] = enthMelt(H,mixZone,nonT_fun,phi_fun,TWater_fun);
+        %T(T>1) = 1;
         H = porNonH_fun(phi,T);
         %% Bouyancy force as the body force to Stokes flow
         %temp bouyancy
@@ -359,11 +360,11 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,
         vmax= max(abs(vm)); %largest solid velocity
         p  = u((Grid.p.Nfx+Grid.p.Nfy+1):end); %Dimless fluid pressure coupled with gravitational head
         %vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),1,1,Grid.p) * ( Gp * p + (rho_w/rho_i) * Pi_5 * [zeros(Grid.p.Nfx,1); ones(Grid.p.Nfy,1)]); %calculate the dimless fluid velocity %%%%
-        if test == 'art_perm'
-            vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1), 1,1,Grid.p) * ( Gp * p ); %calculate the dimless fluid velocity %%%%
-        else
+        if test == 'harmperm' | test == 'effe_vel'
             vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1),-1,1,Grid.p) * ( Gp * p ); %calculate the dimless fluid velocity %%%%
-        
+        else
+            vf = vm - Pi_1 * comp_mean(phiPlot.^(nn-1), 1,1,Grid.p) * ( Gp * p ); %calculate the dimless fluid velocity %%%%
+        end
         vfy = vf(Grid.p.Nfx+1:(Grid.p.Nfx+Grid.p.Nfy)); %y-directional fluid velocity
 
         p  = p - (rho_f/rho_i) * Pi_5 * Y(:);  %Calculating fluid from overall pressure  %%%%
@@ -383,24 +384,43 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,
         ocLog = Y(:) < 2/grRes & phi > 0.5; %Porosity greater than 50% and z (2)
         kappaPrime(ocLog) = kappa_c;
         kappaPrimePlot = reshape(kappaPrime,Grid.p.Ny,Grid.p.Nx);
-        kappaFace = comp_mean(kappaPrimePlot,1,1,Grid.p);
+        
+        if test == 'harmperm' | test == 'effe_vel'
+            kappaFace = comp_mean(kappaPrimePlot,-1,1,Grid.p);            
+        else
+            kappaFace = comp_mean(kappaPrimePlot,1,1,Grid.p);
+        end
+        
                 
         %% Advection of enthalpy, diffusion of temperature
         %AH = build_adv_op(vm,H,dt,Gp,Grid.p,Param.H,'mc')*H; %Upwinding the enthalpy from center to faces
         %Old approach (do not average)
-        AHs = build_adv_op(vm,(1-phi).*(T-1),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1)); %Upwinding the solid enthalpy from center to faces %%%%%%%
-        AHf = build_adv_op(vf,phi*Pi_6,dt,Gp,Grid.p,Param.H,'mc')*(phi*Pi_6); %Upwinding the fluid enthalpy from center to faces %%%%%%%
-        AH  = AHs + AHf; %Combine the advection operator
 
-        %New approach
-        phi_face_vec = comp_mean(phiPlot,1,1,Grid.p)*ones(Grid.p.Nf,1);
-        v_tot = vm.*(1-phi_face_vec) + vf.*phi_face_vec;  %%%% This is where we need to add more variation in velocity        
-        AHnew2 = build_adv_op(v_tot,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
         %norm(AH - AHnew2)
         %
         if test == 'comb_vel'
+                %New approach
+            phi_face_vec = comp_mean(phiPlot,1,1,Grid.p)*ones(Grid.p.Nf,1);
+            v_tot = vm.*(1-phi_face_vec) + vf.*phi_face_vec;  %%%% This is where we need to add more variation in velocity        
+            AHnew2 = build_adv_op(v_tot,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
             AH = AHnew2;
-        end 
+        elseif test == 'effe_vel'
+            qr = - Pi_1 * comp_mean(phiPlot.^(nn),-1,1,Grid.p) * ( Gp * p ); %Dimless Darcy flux
+            D_k = (T-1)/Pi_6;
+            tilde_phi = (1-phi).*D_k + phi;
+            %v_tot = (vm.*(1-phi_face_vec).*(T_face_vec-1) + vf.*phi_face_vec*Pi_6)./((1-phi_face_vec).*(T_face_vec-1) + phi_face_vec*Pi_6);  %%%% This is where we need to add more variation in velocity        
+            %AHnew3 = build_adv_op(v_tot,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'gd')*((1-phi).*(T-1) + phi*Pi_6);
+            %Effective velocity
+            Aq =  build_adv_op(qr,(1./tilde_phi),dt,Gp,Grid.p,Param.H,'gd')*spdiags(1./tilde_phi,0,Grid.p.N,Grid.p.N);  %%%%Advection operator of dimensionless Darcy flux       
+            Ae =  build_adv_op(vm,H,dt,Gp,Grid.p,Param.H,'gd');  %%%%  %Advection operator of dimensionless solid velocity; H' = Pi_6*tilde_phi       
+            AH =  (Aq + Ae)*H; %advection operator multiplied to the dimensionless enthalpy
+
+        else
+            AHs = build_adv_op(vm,(1-phi).*(T-1),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1)); %Upwinding the solid enthalpy from center to faces %%%%%%%
+            AHf = build_adv_op(vf,phi*Pi_6,dt,Gp,Grid.p,Param.H,'mc')*(phi*Pi_6); %Upwinding the fluid enthalpy from center to faces %%%%%%%
+            AH  = AHs + AHf; %Combine the advection operator
+        end         
+
         %AHnew2 = build_adv_op(vm,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
         %AHnew3 = (build_adv_op(vm,(1-phi).*(T-1),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1))+build_adv_op(vm,phi*Pi_6,dt,Gp,Grid.p,Param.H,'mc')*(phi*Pi_6))
         %norm(H - ((1-phi).*(T-1) + phi*Pi_6))
@@ -411,6 +431,12 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,
         RHS_T = L_T_E_H + L_T_E_T*T + (fn_H)*dt; %RHS of enthalpy balance
         H = solve_lbvp(L_T_I,RHS_T,BH,Param.H.g,NH); %time marching the enthalpy equation
         
+
+        %%%%%%%%%%%%%new add extra
+        [T,phi] = enthMelt(H,mixZone,nonT_fun,phi_fun,TWater_fun);
+        %T(T>1) = 1;
+        H = porNonH_fun(phi,T);
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
         %% Advection of organic tracer fn_c is the same as natural BCs
         %Organics
         %Ac1 = build_adv_op(vm,trc1,dt,Gp,Grid.p,Param.c,'mc');%Upwinding the tracer conc. from center to faces
@@ -546,7 +572,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,
 
 
                        %streamfunction plot
-            h=figure('Visible', 'off'); %For visibility: h=figure(4);
+            h=figure('Visible', 'on'); %For visibility: h=figure(4);
             set(gcf,'units','points','position',[0,0,3125,1250])
             % Enlarge figure to full screen.
             [PSI,psi_min,psi_max] = comp_streamfun(vm,Grid.p);
@@ -560,14 +586,18 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,
             Tplot_dummy=Tplot;
             contourf(X*d/1e3,Y*d/1e3-Grid.p.dy,Tplot*DT+T_t,40,'linestyle','none'),view(2),hold on
             c1 = colorbar('NorthOutside');
-            caxis([min(Tplot(:)) max(Tplot(:))]*DT+T_t);
+            if min(Tplot(:))  == max(Tplot(:))
+                caxis([T_t T_b]);
+            else
+                caxis([min(Tplot(:)) max(Tplot(:))]*DT+T_t);
+            end 
             cStrVal = linspace(min(PSI(:)),max(PSI(:)),10);
             %contour(Grid.p.xf*d/1e3,Grid.p.yf*d/1e3,PSI,'k','LevelList',cStrVal);
             c1.Label.String = 'Temperature, K';
             xlabel('x-dir, km');
             ylabel('z-dir, km');
             colormap(ax1,reds);
-            clim([T_t T_b])
+            %clim([T_t T_b])
 
 
 
@@ -726,15 +756,19 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,
             
             if rem(i,100)==0 || i==1
 
-                if test == 'art_perm'                
+                if test == 'harmperm'                
 
-                                save(['../Output/arth_perm_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
+                                save(['../Output/harm_perm_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
                     'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
                     'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
 
                 elseif test == 'comb_vel'
 
                                 save(['../Output/combined_vel_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
+                    'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
+                    'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
+                elseif test == 'effe_vel'
+                                save(['../Output/new_eff_vel_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
                     'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
                     'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
 
@@ -752,12 +786,15 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,
             end
 
 
-                if test == 'art_perm'                
-                    saveas(h,sprintf('../figures/arth_perm_Europa_res_fig%dkc%d.png',i, kc));   
+                if test == 'harmperm'                
+                    saveas(h,sprintf('../figures/harm_perm_Europa_res_fig%dkc%d.png',i, kc));   
                 elseif test == 'comb_vel'
                     saveas(h,sprintf('../figures/combined_vel_Europa_res_fig%dkc%d.png',i, kc));   
                 elseif test == 'temprate'
-                    saveas(h,sprintf('../figures/temperate_Europa_res_fig%dkc%d.png',i, kc));   
+                    saveas(h,sprintf('../figures/temperate_Europa_res_fig%dkc%d.png',i, kc));  
+
+                elseif test == 'effe_vel'
+                    saveas(h,sprintf('../figures/newer_effective_vel_Europa_res_fig%dkc%d.png',i, kc)); 
                 else 
                     saveas(h,sprintf('../figures/original_Europa_res_fig%dkc%d.png',i, kc));   
 
@@ -778,17 +815,17 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_test(fn,eta_0,
 %% Making a video out of frames
  % create the video writer with fps of the original video
 
-if test == 'art_perm'                
-    Data_result= sprintf('../figures/arth_perm_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot)); 
-elseif test == 'comb_vel'
-    Data_result= sprintf('../figures/combined_vel_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));  
-elseif test == 'temprate'
-    Data_result= sprintf('../figures/temperate_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));  
-else 
+ if test == 'harmperm'                
+    Data_result= sprintf('../figures/harm_perm_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot)); 
+ elseif test == 'comb_vel'
+    Data_result= sprintf('../figures/combined_vel_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));         
+ elseif test == 'temprate'
+    Data_result= sprintf('../figures/temperate_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot)); 
+ elseif test == 'effe_vel'
+    Data_result= sprintf('../figures/new_effective_vel_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot)); 
+ else 
     Data_result= sprintf('../figures/original_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));  
-
-end 
-
+ end 
 
  writerObj = VideoWriter(Data_result);
  writerObj.FrameRate = 5; % set the seconds per image

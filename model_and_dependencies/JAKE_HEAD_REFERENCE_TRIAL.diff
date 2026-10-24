@@ -1,0 +1,31 @@
+--- porosity_wave_2D_Jake_minimal_before_trial.m
++++ porosity_wave_2D_Jake_minimal.m
+@@ -289,6 +289,7 @@
+         'boundary_abs_advective_heat','boundary_abs_conductive_heat'};
+     result.boundary_description = 'closed, insulated top/base/sides; enthalpy and melt fraction free in all cells';
+     result.enthalpy_dirichlet_count = numel(Param.H.dof_dir);
++    result.correct_head_reference=options.correct_head_reference;
+     result.use_actual_conductivity_timestep=options.use_actual_conductivity_timestep;
+     result.initial_enthalpy_total = sum(H.*Grid.p.V);
+     result.output_file = fullfile(options.output_dir,sprintf('noflow_kc_%0.3e.mat',kc));
+@@ -376,6 +377,11 @@
+         
+         % higher porosity acts against Ra bouyancy force 
+         fsVec = fs_T + fs_por + fs_fluid_pressure; %adding diffusion and convection equation RHS
++        % TRIAL FLAG: restore the reference removed by the inherited buoyancy.
++        % rho_ref/rho_i = 1+alpha*DT; retain P_f=p_f+rho_f*g*z (head form).
++        if options.correct_head_reference
++            fsVec=fsVec+(Pi_5+Ra)*ones(size(fsVec));
++        end
+         
+         %fs_mass = Dp * Kdprime * Pi_3 * [zeros(Grid.p.Nfx,1); ones(Grid.p.Nfy,1)];  %%%%source term of total mass balance; no Gamma term
+         fs_mass  = zeros(Grid.p.N,1);   %No source term in mass balance %%%%
+@@ -1010,7 +1016,7 @@
+ end
+ 
+ function options = nf_options(options)
+-defaults = struct('use_actual_conductivity_timestep',false,'final_years',Inf,'snapshot_interval_years',Inf,'checkpoint_steps',100, ...
++defaults = struct('correct_head_reference',false,'use_actual_conductivity_timestep',false,'final_years',Inf,'snapshot_interval_years',Inf,'checkpoint_steps',100, ...
+     'max_steps',1000,'snapshot_steps',[0 100 250 500 1000], ...
+     'legacy_outputs',false,'evolve_tracers',false,'stop_on_melt_loss',false, ...
+     'output_dir',fullfile(fileparts(mfilename('fullpath')),'..','Output','s3_minimal'));

@@ -1,0 +1,6 @@
+{
+  "source_file": "porosity_wave_2D_Jake_minimal.m",
+  "sha256": "c05fd9ece7d20bf5f7b01efeb1745b7b9f851158bb1d17146fd6c639de8b3d39",
+  "core_flow_transport_block": "byte-for-byte identical as normalized text",
+  "stokes_operator_helper": "byte-for-byte identical as normalized text"
+}

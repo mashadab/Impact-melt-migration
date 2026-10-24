@@ -1,0 +1,233 @@
+--- porosity_wave_2D_Jake_minimal.m
++++ impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_noflow.m
+@@ -1,8 +1,9 @@
++% EUROPA ADAPTATION: copied from porosity_wave_2D_Jake_minimal.m; see EUROPA_S3_CHANGES.md.
+ % CHANGE NF-01 START: Separate callable solver, options argument and documented closed-domain behavior.
+ % CHANGE NF-01 SOURCE: original lines 1-1; see NOFLOW_BASE_CHANGES.diff.
+-function result = porosity_wave_2D_Jake_minimal(fn,eta_0,E_a,kc,test,simple_test,options)
+-% Separate variant of simple_test_1D: closed, insulated top, base and sides.
+-% Enthalpy and melt fraction evolve freely in EVERY cell, including the lid.
++function result = impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa_noflow(fn,eta_0,E_a,kc,test,simple_test,options)
++% Europa cylindrical adaptation of the S3 solver; impermeable material walls.
++% Surface enthalpy is prescribed; basal enthalpy and melt fraction evolve freely.
+ % Includes the permeability-matrix and pressure-head consistency fixes.
+ % Default runs omit passive tracers and legacy 2D graphics/video; neither
+ % feeds back into the flow/enthalpy solution. See Simple_test_noflow_wrapper.
+@@ -62,12 +63,9 @@
+     % Python from iSALE simulations)
+ % CHANGE NF-03 START: Resolve initial-condition files relative to this solver.
+ % CHANGE NF-03 SOURCE: original lines 46-46; see NOFLOW_BASE_CHANGES.diff.
+-    % S3 CHANGE: wave CSV replaces impact initial condition; original scales retained.
+-    phi0=1e-3;
+-    delta0=sqrt(kc*phi0^2*eta_0/(phi0*1e-3));
+-    d=128*delta0;
+-% END CHANGE NF-03
+-    % S3 CHANGE: impact-file load removed; exact wave CSV is loaded below.
++    % EUROPA: original impact data and shell thickness, independent of kc.
++    fp=fullfile(fileparts(mfilename('fullpath')),'..','initial_conditions','ic');
++    load([fp fn '_100.mat'],'T','phi');
+ 
+     %% Set physical parameters and make dimensionless scales
+     % physical parameters for ice
+@@ -75,9 +73,9 @@
+     a = 185; % ice specific heat parameter
+     b = 7.037; % ice specific heat parameter
+     T_b = 273; % melting temperature, K
+-    rho_i = 917; % S3 CHANGE: benchmark density
++    rho_i = 920; % Europa ice density
+     % rho_i = 920; % ice density at melting temperature, kg/m^3
+-    grav = 9.81; % S3 CHANGE: benchmark gravity
++    grav = 1.315; % Europa gravity
+     % grav = 1.315; % Europa gravity, m/s^2 
+     DT = T_b - T_t; % difference in temperature
+     alpha = 1.6e-4; % thermal expansion coefficient, 1/K
+@@ -97,9 +95,6 @@
+     %barrViscPhi = @(nonT,phi) max(exp(Apar*(T_b./(DT.*nonT+T_t)-1)).*exp(-porViscPar*phi),1e-2); %Old viscosity
+     ViscTempPhi = @(nonT,phi) max(exp(Apar*(T_b./(DT.*nonT+T_t)-1)).*exp(-porViscPar*phi),1e-5); %viscosity with temperature variation with water softening
+     barrViscPhi = @(nonT,phi) max(exp(Apar*(T_b./(DT.*nonT+T_t)-1).*(1-phi)).*exp(-porViscPar*phi),1e-5); %Old viscosity with water softening
+-    % S3 CHANGE: constant intrinsic viscosity for the benchmark.
+-    ViscTempPhi = @(nonT,phi) ones(size(nonT));
+-    barrViscPhi = @(nonT,phi) 1-phi; % effective shear viscosity
+     % viscosity is max of Temp dependence on viscosity, melt dependence, threshold
+     % threshold 1e-2 means two orders of magnitude reduction is essentially inviscid
+     c_fun = @(nonT) a+b*(DT*nonT+T_t); %specific heat function, J/(kg K)
+@@ -141,39 +136,48 @@
+     %%%%%%%%%
+     
+     % non-dimensionalize temperature
+-    % S3 CHANGE: initial dimensionless temperature is set in TGr below.
++    T = (T - T_t)/DT; % original Europa nondimensionalization
+ 
+     % thermal condutvity in convective ocean, set to maintain vertical
+     % isotherm in ocean
+     kappa_c = 100; %thermal cond. W/(m-K) is set high to make ocean isothermal
+ 
+-    % S3 CHANGE START: Cartesian grid and EXACT original wave realization.
+-    grRes=100; ocTh=0; % original legacy diagnostic parameter; no ocean layer
+-    Gridp.xmin=0; Gridp.xmax=32*delta0/d; Gridp.Nx=256;
+-    Gridp.ymin=0; Gridp.ymax=128*delta0/d; Gridp.Ny=1024;
+-    Gridp.geom='cartesian';
+-    Grid=build_stokes_grid(Gridp);
+-    [X,Y]=meshgrid(Grid.p.xc,Grid.p.yc);
+-    Xc=X(:); Yc=Y(:);
+-    init_dir=fullfile(fileparts(mfilename('fullpath')),'porosity-wave-test','MATLAB','porosity-wave-init');
+-    phi_init=csvread(fullfile(init_dir,'phi_5.csv'));
+-    vfx_init=csvread(fullfile(init_dir,'vfx_5.csv'));
+-    vfy_init=csvread(fullfile(init_dir,'vfy_5.csv')); %#ok<NASGU>
+-    phiodd=phi_init; phieven=phi_init;
+-    phiodd(1:2:end-1)=[];
+-    phieven(2:2:end)=[];
+-    A_init=[phiodd';phieven'];
+-    phi_init=mean(A_init,1);
+-    Nc_init=length(vfx_init)-1;
+-    phi_init=reshape(phi_init,Nc_init,Nc_init);
+-    phiGr=phi0*ones(Grid.p.Ny,Grid.p.Nx);
+-    begin_y_por_wave=Gridp.ymax-40*delta0/d;
+-    ind=find(Grid.p.yc>begin_y_por_wave);
+-    phiGr(ind(1):ind(1)+256-1,:)=phi0*phi_init;
+-    TGr=ones(size(phiGr)); % INITIAL temperature only, not prescribed thereafter
+-    phiOrig=sum(phiGr(:).*Grid.p.V)*d^3;
+-    % S3 CHANGE END: original equations and time stepping below retained.
+-
++    %% build cylindirical grid for numerical solution
++    % build grid
++    grRes = 100; % grid resolution in radial direction
++    ocTh = grRes/5; % make ocean below the ice shell: 1/5 factor being 20% of the ice shell
++    Gridp.xmin = 0; Gridp.xmax = 2; Gridp.Nx = grRes; %radial direction
++    Gridp.ymin = -ocTh/grRes; Gridp.ymax = 1; Gridp.Ny = grRes+ocTh; %vertical direction
++    Gridp.geom = 'cylindrical_rz';       %geometry type: cylinderical r-z coordinates
++    Grid = build_stokes_grid_cyl(Gridp); %build grid for Stokes equation in 
++    [X,Y] = meshgrid(Grid.p.xc,Grid.p.yc);
++    
++    % convert inital condition to grid
++    TGr = reshape(T,grRes,Grid.p.Nx);     %Temp on the grid, K
++    phiGr = reshape(phi,grRes,Grid.p.Nx); %porosity on the grid
++    Xc = X(:); Yc = Y(:);
++
++    % get initial melt volumes: phiOrig, m^3
++    phiOrig = sum(sum(phiGr(10:end,:),1).*Grid.p.V(Grid.p.dof_ymin)' * d^3)
++    % First sum is for porosity in the z direction since volume is same
++    % Second sum is after multiplying the grid volume at bottom cells
++    % Lastly d^3 comes from the redimensionalization to calculate melt volumes
++    % First 10 rows are ignored since ocean there is neglected so 
++    % phiGr(10:end,:) and not phiGr(1:end,:)
++   
++    % build ocean layer
++    TOc = ones(ocTh,Grid.p.Nx);    %Temperature of ocean, K
++    phiOc = zeros(ocTh,Grid.p.Nx);  %Porosity of ocean, K %Making it all ice, temprate
++    
++    % combine ice shell and ocean to get the entire domain fields
++    TGr = [TOc; TGr]; %Temperature, K
++
++    if test == 'temprate'
++        TGr = TGr * 0 + 1;  %making the temperature 1 everywhere
++    end 
++
++    phiGr = [phiOc; phiGr]; %Porosity or melt fraction
++    phiGr(Y<0.25) = 0;  %%%%new line
+     T = TGr(:); %Making Temperature array from grid, N by 1
+     phi = phiGr(:); %Making porosity array from grid, N by 1
+     H = porNonH_fun(phi,T); %Dimensionless enthalpy array
+@@ -219,18 +223,19 @@
+     %% Build boundary conditions for temperature and flow equation
+ % CHANGE NF-05 START: Remove top/base enthalpy constraints; close and insulate every outer face.
+ % CHANGE NF-05 SOURCE: original lines 216-255; see NOFLOW_BASE_CHANGES.diff.
+-    % Closed, insulated domain: no prescribed enthalpy or melt fraction.
++    % EUROPA: retain the original fixed cold surface, with a free basal enthalpy.
++    % Material impermeability does not prescribe a basal melt fraction.
+     Param = struct('H',{},'g',{},'dof_dir',{});
+     Param(1).H = struct('dof_dir',{},'dof_f_dir',{},'g',{},'dof_neu',{},'dof_f_neu',{},'qb',{},'dof_out',{});
+-    Param.H(1).dof_dir = [];
+-    Param.H(1).dof_f_dir = [];
+-    Param.H(1).g = [];
+-    Param.H(1).dof_neu = [Grid.p.dof_xmin;Grid.p.dof_xmax;Grid.p.dof_ymin;Grid.p.dof_ymax];
+-    Param.H(1).dof_f_neu = [Grid.p.dof_f_xmin;Grid.p.dof_f_xmax;Grid.p.dof_f_ymin;Grid.p.dof_f_ymax];
+-    Param.H(1).qb = zeros(size(Param.H(1).dof_neu));
++    Param.H(1).dof_dir = Grid.p.dof_ymax;
++    Param.H(1).dof_f_dir = Grid.p.dof_f_ymax;
++    Param.H(1).g = nonH_fun(0)*ones(numel(Grid.p.dof_ymax),1);
++    Param.H(1).dof_neu = [Grid.p.dof_xmin;Grid.p.dof_xmax;Grid.p.dof_ymin];
++    Param.H(1).dof_f_neu = [Grid.p.dof_f_xmin;Grid.p.dof_f_xmax;Grid.p.dof_f_ymin];
++    Param.H(1).qb = [zeros(size(Grid.p.dof_xmin));zeros(size(Grid.p.dof_xmax));options.basal_heat_flux*ones(size(Grid.p.dof_ymin))];
+     Param.H(1).dof_out = [];
+     [BH,NH,fn_H] = build_bnd(Param.H,Grid.p,Ip);
+-    closed_faces = unique(Param.H.dof_f_neu);
++    closed_faces = unique([Param.H.dof_f_neu;Grid.p.dof_f_ymax]); % MATERIAL walls
+ 
+ % END CHANGE NF-05
+     % Free slip boundary condition for Stokes equation
+@@ -287,11 +292,15 @@
+         'top_abs_v_s','top_abs_q_r','top_abs_advective_heat','top_abs_conductive_heat', ...
+         'top_phi_min','top_phi_max','boundary_abs_v_s','boundary_abs_q_r', ...
+         'boundary_abs_advective_heat','boundary_abs_conductive_heat'};
+-    result.boundary_description = 'closed, insulated top/base/sides; enthalpy and melt fraction free in all cells';
++    result.boundary_description = 'impermeable free-slip walls; fixed 100 K surface; prescribed basal heat flux; free basal enthalpy';
+     result.enthalpy_dirichlet_count = numel(Param.H.dof_dir);
+     result.correct_head_reference=options.correct_head_reference;
+     result.use_actual_conductivity_timestep=options.use_actual_conductivity_timestep;
+     result.initial_enthalpy_total = sum(H.*Grid.p.V);
++    result.basal_heat_flux = options.basal_heat_flux;
++    result.initial_condition_file = [fp fn '_100.mat'];
++    result.baseline = 'porosity_wave_2D_Jake_minimal.m';
++    cumulative_heat_input = 0;
+     result.output_file = fullfile(options.output_dir,sprintf('noflow_kc_%0.3e.mat',kc));
+     result = nf_snapshot(result,0,0,T,phi,H,Grid,d,DT,T_t);
+     run_timer = tic;
+@@ -380,6 +389,8 @@
+         % TRIAL FLAG: restore the reference removed by the inherited buoyancy.
+         % rho_ref/rho_i = 1+alpha*DT; retain P_f=p_f+rho_f*g*z (head form).
+         if options.correct_head_reference
++            % Restore the SAME reference as the validated S3 head formulation.
++            % -Ra*T' + Ra = Ra*(1-T'): thermal variations remain active.
+             fsVec=fsVec+(Pi_5+Ra)*ones(size(fsVec));
+         end
+         
+@@ -497,6 +508,9 @@
+         L_T_E_H = H - dt*(Dp*AH);         %Linear operator of heat advection
+         RHS_T = L_T_E_H + L_T_E_T*T + (fn_H)*dt; %RHS of enthalpy balance
+         H = solve_lbvp(L_T_I,RHS_T,BH,Param.H.g,NH); %time marching the enthalpy equation
++        % Include prescribed basal heat and surface thermostat exchange in energy budget.
++        cumulative_heat_input = cumulative_heat_input + dt*sum(fn_H.*Grid.p.V) ...
++            + sum((H(Param.H.dof_dir)-RHS_T(Param.H.dof_dir)).*Grid.p.V(Param.H.dof_dir));
+         
+ 
+         %%%%%%%%%%%%%new add extra
+@@ -575,8 +589,11 @@
+         fb = Grid.p.dof_f_ymin;
+         ft = Grid.p.dof_f_ymax;
+         conductive = -kappaFace*(Gp*T);
++        conductive(fb) = options.basal_heat_flux; % prescribed inward basal heat (magnitude below)
++        assert(max(abs(vm(fb))) < 1e-10*max(1,max(abs(vm))), 'Basal solid flux');
++        assert(all(qr(fb)==0) && all(AH(fb)==0), 'Basal material or advective heat flux');
+         enthalpy_now = sum(H.*Grid.p.V);
+-        energy_error = enthalpy_now-result.initial_enthalpy_total;
++        energy_error = enthalpy_now-result.initial_enthalpy_total-cumulative_heat_input;
+         result.history(i,:) = [tTot,min(T)*DT+T_t,max(T)*DT+T_t,min(phi),max(phi), ...
+             enthalpy_now,max(abs(vm(fb))),max(abs(qr(fb))),max(abs(AH(fb))), ...
+             max(abs(conductive(fb))),energy_error, ...
+@@ -990,6 +1007,7 @@
+     if result.steps(end) ~= i
+         result = nf_snapshot(result,i,tTot,T,phi,H,Grid,d,DT,T_t);
+     end
++    result.cumulative_heat_input = cumulative_heat_input;
+     result.final_state = struct('H',H,'T_dimensionless',T,'phi',phi, ...
+         'Grid',Grid,'v_s_dimensionless',vm,'v_f_dimensionless',vf, ...
+         'q_r_dimensionless',qr,'p_head_dimensionless',p_head);
+@@ -1016,14 +1034,15 @@
+ end
+ 
+ function options = nf_options(options)
+-defaults = struct('correct_head_reference',false,'use_actual_conductivity_timestep',false,'final_years',Inf,'snapshot_interval_years',Inf,'checkpoint_steps',100, ...
++defaults = struct('basal_heat_flux',0,'correct_head_reference',true,'use_actual_conductivity_timestep',true,'final_years',Inf,'snapshot_interval_years',Inf,'checkpoint_steps',100, ...
+     'max_steps',1000,'snapshot_steps',[0 100 250 500 1000], ...
+     'legacy_outputs',false,'evolve_tracers',false,'stop_on_melt_loss',false, ...
+-    'output_dir',fullfile(fileparts(mfilename('fullpath')),'..','Output','s3_minimal'));
++    'output_dir',fullfile(fileparts(mfilename('fullpath')),'..','Output','Europa_S3_cylindrical'));
+ names = fieldnames(defaults);
+ for k=1:numel(names)
+     if ~isfield(options,names{k}), options.(names{k})=defaults.(names{k}); end
+ end
++validateattributes(options.basal_heat_flux,{'numeric'},{'scalar','real','finite'});
+ validateattributes(options.max_steps,{'numeric'},{'scalar','integer','positive'});
+ validateattributes(options.use_actual_conductivity_timestep,{'logical'},{'scalar'});
+ options.snapshot_steps = unique([0 options.snapshot_steps(:)' options.max_steps]);

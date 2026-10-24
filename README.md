@@ -41,7 +41,35 @@ If you use this code or data, please cite:
 
 ## Getting Started
 
-### Quick Usage
+### S3-based shared solver
+
+The current shared solver is `model_and_dependencies/darcy_stokes_2D_cases.m`,
+copied from the working `porosity_wave_2D_Jake_minimal.m` baseline with case
+selection through if/else branches. Run a short case from the repository root:
+
+```matlab
+addpath('model_and_dependencies')
+o = struct('max_steps',10,'output_dir',fullfile(pwd,'Output','my_europa_run'));
+r = run_darcy_stokes_case('impact_melt_europa',o);
+% Use 'porosity_wave' for the Cartesian validation case.
+```
+
+Europa uses cylindrical coordinates, an impermeable base, and permeability
+`k = kc * phi^3`; the wave case retains its `phi^2` law. The Europa lower region
+at z < 0 starts with zero melt and a temperature of 273 K. For the research run
+with `kc = 1.85e-8 m^2`, `run_Europa_until_depleted` runs until shell melt above
+z = 0 falls to 0.5% of its initial volume, subject to a safety step limit.
+
+See [the case setup](model_and_dependencies/S3_CASE_SWITCH_README.md),
+[melt budget definitions](model_and_dependencies/EUROPA_MELT_BUDGET.md), and
+[research output schedule](model_and_dependencies/EUROPA_RESEARCH_OUTPUTS.md).
+The [independent 100-step comparison](docs/EUROPA_REPRODUCIBILITY.md) records
+exact agreement with the long run over that interval. Generated results,
+videos, temporary files, and autosaves remain local. Required wave CSV inputs
+and existing Europa initial-condition MAT files are versioned; large local
+wave-history MAT files are excluded.
+
+### Legacy wrappers
 After cloning the repository and installing the required libraries, run the Matlab file for Titan and Europa called `Titan_wrapper.m` and `Europa_wrapper.m`. The scripts to make the videos separately are `Titan_video_creation.` and `Europa_video_creation.m` for Titan and Europa respectively. Comments are provided in the code. Output figures are located in the `\Figures` folder. Output matlab data is in `\Output` folder. 
 
 ## Melt migration with and without different motion of melt and ice phases

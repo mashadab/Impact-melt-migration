@@ -420,6 +420,11 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
     next_output_year=options.snapshot_interval_years;
     requested_snapshot_index=1;
     stop_requested=false;
+    if is_europa
+        last_snapshot_shell_melt=result.melt_budget.liquid_volume_m3(end,2);
+        last_snapshot_delivery=result.melt_budget.delivered_net_m3(end);
+        last_snapshot_depth=result.melt_budget.penetration_depth_km(end);
+    end
 
     
     %% temporal evolution
@@ -766,7 +771,17 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
         end
         requested_snapshot_due=requested_snapshot_index<=numel(options.snapshot_years) ...
             && tTot>=options.snapshot_years(requested_snapshot_index);
-        if any(i==options.snapshot_steps) || tTot>=next_output_year || requested_snapshot_due
+        periodic_step_due=isfinite(options.snapshot_every_steps) && mod(i,options.snapshot_every_steps)==0;
+        diagnostic_snapshot_due=false;
+        if is_europa
+            depth_now=result.melt_budget.penetration_depth_km(end);
+            volume_change=max(abs(phiRem-last_snapshot_shell_melt),abs(phiDrain1-last_snapshot_delivery))/phiOrig;
+            depth_change=abs(depth_now-last_snapshot_depth);
+            diagnostic_snapshot_due=volume_change>=options.snapshot_melt_fraction_change ...
+                || (isfinite(options.snapshot_depth_change_km) && ...
+                (depth_change>=options.snapshot_depth_change_km || xor(isfinite(depth_now),isfinite(last_snapshot_depth))));
+        end
+        if any(i==options.snapshot_steps) || tTot>=next_output_year || requested_snapshot_due || periodic_step_due || diagnostic_snapshot_due
             while requested_snapshot_index<=numel(options.snapshot_years) ...
                     && tTot>=options.snapshot_years(requested_snapshot_index)
                 requested_snapshot_index=requested_snapshot_index+1;
@@ -776,6 +791,11 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
             if is_europa && options.save_state_snapshots
                 save_Europa_state(options.output_dir,i,tTot,tTot-dt*t_c/3.154e7, ...
                     T,phi,H,Grid,d,DT,T_t,vm,vf,qr,p_head,p,overpressure,eta_0,D_T,kc,nn);
+            end
+            if is_europa
+                last_snapshot_shell_melt=phiRem;
+                last_snapshot_delivery=phiDrain1;
+                last_snapshot_depth=depth_now;
             end
             save(result.output_file,'result');
         end
@@ -1230,6 +1250,7 @@ end
 
 function options = nf_options(options)
 defaults = struct('snapshot_years',[],'save_state_snapshots',false,'initial_only',false,'basal_heat_flux',0,'correct_head_reference',true,'use_actual_conductivity_timestep',true,'final_years',Inf,'snapshot_interval_years',Inf,'checkpoint_steps',100, ...
+    'snapshot_every_steps',Inf,'snapshot_melt_fraction_change',Inf,'snapshot_depth_change_km',Inf, ...
     'max_steps',1000,'snapshot_steps',[0 100 250 500 1000], ...
     'legacy_outputs',false,'evolve_tracers',false,'stop_on_melt_loss',false,'remaining_melt_fraction',0.005, ...
     'output_dir',fullfile(fileparts(mfilename('fullpath')),'..','Output','s3_minimal'));
@@ -1243,6 +1264,10 @@ validateattributes(options.basal_heat_flux,{'numeric'},{'scalar','real','finite'
 validateattributes(options.max_steps,{'numeric'},{'scalar','integer','positive'});
 validateattributes(options.use_actual_conductivity_timestep,{'logical'},{'scalar'});
 validateattributes(options.save_state_snapshots,{'logical'},{'scalar'});
+validateattributes(options.snapshot_every_steps,{'numeric'},{'scalar','real','positive'});
+if isfinite(options.snapshot_every_steps),validateattributes(options.snapshot_every_steps,{'numeric'},{'integer'});end
+validateattributes(options.snapshot_melt_fraction_change,{'numeric'},{'scalar','real','positive'});
+validateattributes(options.snapshot_depth_change_km,{'numeric'},{'scalar','real','positive'});
 if ~isempty(options.snapshot_years), validateattributes(options.snapshot_years,{'numeric'},{'vector','real','nonnegative','finite'}); end
 options.snapshot_years=sort(unique(options.snapshot_years(:)'));
 options.snapshot_steps = unique([0 options.snapshot_steps(:)' options.max_steps]);

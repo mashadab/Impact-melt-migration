@@ -1,5 +1,12 @@
 # Europa research run: saved data and schedule
 
+Update, 25 October 2026: subsequent launches add per-100-step, logarithmic-time,
+volume-change and front-depth-change full-state triggers. The already running
+frozen case retains its original schedule and has a separate checkpoint
+preserver. See `../docs/EUROPA_PAPER_PLOT_OUTPUTS.md` for the paper-to-data map,
+exact sampling/threshold definitions, and plotting-ready output files. The
+scalar budget below already records every completed solver timestep.
+
 Run entry point: `run_Europa_until_depleted`. Case: `impact_melt_europa`.
 An optional second argument changes only the permeability coefficient in the
 launcher; the original default remains 1.85e-8 m^2. For example,

@@ -1,0 +1,97 @@
+{
+  "baseline": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\centered_water_S3_verification_20261024_213417\\shared_solver_before.m.txt",
+  "baseline_sha256": "d48a4a7bf6636d06b233d16f3afccd50e363fe5a24336de8d04b96828e8e7990",
+  "solver": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\model_and_dependencies\\darcy_stokes_2D_cases.m",
+  "solver_sha256": "16dcab8b484d6751dfdb263fccd546a5c72bc40d03519e8d6eab2ed4bcc7f667",
+  "original_wave_sha256": "c05fd9ece7d20bf5f7b01efeb1745b7b9f851158bb1d17146fd6c639de8b3d39",
+  "case_key": "centered_water",
+  "flow_transport_block_text_identical": true,
+  "flow_transport_block_lines": 205,
+  "flow_transport_block_sha256": "5cfa959b97730a84d898508d902f3d98ac1df0ed2fbbddd4e91dc57dc69cedc6",
+  "stokes_operator_helper_text_identical": true,
+  "independent_before_after_verification_dir": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\centered_water_S3_verification_20261024_213417",
+  "setup": {
+    "grid": [
+      100,
+      120
+    ],
+    "x_m": [
+      0,
+      20000
+    ],
+    "z_m": [
+      -2000,
+      10000
+    ],
+    "initial_water_x_m": [
+      5000,
+      15000
+    ],
+    "initial_water_z_m": [
+      4000,
+      10000
+    ],
+    "initial_temperature_K": 273,
+    "water_phi": 1,
+    "elsewhere_phi": 0,
+    "permeability_exponent": 3,
+    "kc_m2": 1.85e-08,
+    "coordinates": "cartesian",
+    "walls": "closed, free slip, insulated"
+  },
+  "restart_from_biased_run": false,
+  "archived_source_files": {
+    "centered_blob_diagnostics.m": "d12a009dd8a3b36fe7e72892a01b648689c822381cf7ea3be75a85201c86c609",
+    "darcy_stokes_2D_cases.m": "16dcab8b484d6751dfdb263fccd546a5c72bc40d03519e8d6eab2ed4bcc7f667",
+    "record_centered_water_step.m": "7513b1a314caf07e4cdd53a54653fb7676246ec5c6f2066bdf2300e9e57a652b",
+    "run_centered_water_S3.m": "8ab7e67179560d056f73a32bfabb9a3dd56a69333343ac2f89dc5b7bd0295444",
+    "run_darcy_stokes_case.m": "36ebf1bd7f05eafc40578daa45f138663fb8c0b63933c40f516ed93a0daa7eaf"
+  },
+  "verification": {
+    "wave_bitwise_identical": true,
+    "europa_bitwise_identical": true,
+    "initial_corrected_vs_max_abs_m_s": 1.3395878404815922e-15,
+    "initial_corrected_q_max_abs_m_s": 1.4085099121654947e-16,
+    "initial_corrected_vs_relative_L2": 2.438572859275694e-10,
+    "initial_corrected_q_relative_L2": 7.428357498543622e-10,
+    "independent_flow_relative_tolerance": 1e-08,
+    "centered_initial_state_identical": true,
+    "initial_corrected_flow_matches_within_tolerance": true,
+    "zero_Darcy_on_faces_touching_initially_dry_cells": true,
+    "corrected_run_steps": 187,
+    "corrected_run_years": 1,
+    "corrected_initial_max_vs_m_per_year": 109.76897342091063,
+    "corrected_initial_max_q_m_per_year": 20.630451084385317,
+    "corrected_first_dt_years": 0.4546098052527914,
+    "max_boundary_flux_dimensionless": 0,
+    "relative_enthalpy_error": 5.756882046896219e-15,
+    "max_phi_initially_dry": 0.9962683640278895,
+    "max_phi_lower": 0.9962683640278895,
+    "temperature_range_K": [
+      273,
+      273
+    ],
+    "output_dir": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\centered_water_S3_verification_20261024_213417\\centered_corrected_1yr",
+    "passed": true
+  },
+  "run_source_matches_current": {
+    "barrViscPhase.m": true,
+    "build_adv_op.m": true,
+    "build_bnd.m": true,
+    "build_grid.m": true,
+    "build_ops.m": true,
+    "build_stokes_grid_cyl.m": true,
+    "centered_blob_diagnostics.m": true,
+    "comp_limiter.m": true,
+    "comp_mean.m": true,
+    "comp_mean_corners.m": true,
+    "darcy_stokes_2D_cases.m": true,
+    "enthMelt.m": true,
+    "flux_upwind.m": true,
+    "record_centered_water_step.m": true,
+    "run_centered_water_S3.m": true,
+    "run_darcy_stokes_case.m": true,
+    "smoothness.m": true,
+    "solve_lbvp.m": true
+  }
+}

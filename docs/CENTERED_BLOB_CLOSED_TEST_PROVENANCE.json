@@ -1,0 +1,13 @@
+{
+  "parent": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\model_and_dependencies\\simple_test_1D_half_water_closed.m",
+  "target": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\model_and_dependencies\\simple_test_1D_centered_blob_closed.m",
+  "parent_sha256": "0b7e393c6ee28ac7c6e28521b9cd0949547484269c829242fdd2f69ebf8bc5eb",
+  "target_sha256": "7ec36cce2836aa6f7a28856a43c5fadf9ab5bf40b1db7a871811cc3e268e4e45",
+  "only_physical_change": "water initially restricted to x in central half, z in upper half",
+  "other_changes": [
+    "function name",
+    "output directory",
+    "save actual full initialization"
+  ],
+  "reverse_substitution_matches_parent": true
+}

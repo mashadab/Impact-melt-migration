@@ -1,5 +1,10 @@
 # One solver, two case keys
 
+Update, 24 October 2026: the same solver now also accepts `centered_water` for
+the closed Cartesian water-over-ice test. See
+`../docs/CENTERED_WATER_S3_SETUP.md` for the minimal setup diff and verification.
+The shared flow/transport equations and both existing cases are retained.
+
 `darcy_stokes_2D_cases.m` was created by copying `porosity_wave_2D_Jake_minimal.m`
 and inserting if/else setup branches. It was not rewritten from scratch.
 The original S3 source remains untouched. `S3_CASE_SWITCH.diff` is the complete

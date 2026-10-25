@@ -1,0 +1,72 @@
+[
+  {
+    "slide": 5,
+    "key": "wave",
+    "path": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\research_presentation_20261025\\videos\\01_porosity_wave_800yr.mp4",
+    "poster": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\tmp\\research_ppt_build_20261025\\posters\\wave.png",
+    "x": 125,
+    "y": 130,
+    "w": 1030,
+    "h": 480
+  },
+  {
+    "slide": 8,
+    "key": "europa_high",
+    "path": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\research_presentation_20261025\\videos\\02_Europa_kc_1p85e-8.mp4",
+    "poster": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\tmp\\research_ppt_build_20261025\\posters\\europa_high.png",
+    "x": 64,
+    "y": 218,
+    "w": 552,
+    "h": 311
+  },
+  {
+    "slide": 8,
+    "key": "europa_low",
+    "path": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\research_presentation_20261025\\videos\\03_Europa_kc_1p85e-16.mp4",
+    "poster": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\tmp\\research_ppt_build_20261025\\posters\\europa_low.png",
+    "x": 664,
+    "y": 218,
+    "w": 552,
+    "h": 311
+  },
+  {
+    "slide": 13,
+    "key": "flat",
+    "path": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\research_presentation_20261025\\videos\\04_flat_layer_8p893yr.mp4",
+    "poster": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\tmp\\research_ppt_build_20261025\\posters\\flat.png",
+    "x": 64,
+    "y": 220,
+    "w": 552,
+    "h": 311
+  },
+  {
+    "slide": 13,
+    "key": "center_short",
+    "path": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\research_presentation_20261025\\videos\\05_centered_body_8p893yr.mp4",
+    "poster": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\tmp\\research_ppt_build_20261025\\posters\\center_short.png",
+    "x": 664,
+    "y": 220,
+    "w": 552,
+    "h": 311
+  },
+  {
+    "slide": 17,
+    "key": "warm",
+    "path": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\research_presentation_20261025\\videos\\06_centered_warm_100yr.mp4",
+    "poster": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\tmp\\research_ppt_build_20261025\\posters\\warm.png",
+    "x": 64,
+    "y": 220,
+    "w": 552,
+    "h": 311
+  },
+  {
+    "slide": 17,
+    "key": "cold",
+    "path": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\research_presentation_20261025\\videos\\07_centered_cold_bottom_100yr.mp4",
+    "poster": "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\tmp\\research_ppt_build_20261025\\posters\\cold.png",
+    "x": 664,
+    "y": 220,
+    "w": 552,
+    "h": 311
+  }
+]

@@ -1,6 +1,10 @@
 # Europa research run: saved data and schedule
 
 Run entry point: `run_Europa_until_depleted`. Case: `impact_melt_europa`.
+An optional second argument changes only the permeability coefficient in the
+launcher; the original default remains 1.85e-8 m^2. For example,
+`run_Europa_until_depleted([],1.85e-16)` starts a fresh output folder with the
+same initial conditions, boundaries, stopping criterion, and save schedule.
 The user selected cubic permeability for Europa: k=kc*phi^3, kc=1.85e-8 m^2.
 The wave key retains the validated S3 phi^2 law. Other shared pressure/transport
 equations are unchanged. Lower region z<0 initially has phi=0 and T=273 K.

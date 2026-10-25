@@ -1,14 +1,16 @@
-function run_Europa_until_depleted(output_dir)
-% Continue a fresh Europa case until <=0.5% of initial shell melt remains.
-% kc=1.85e-8 m^2; delivery and net refreezing can both remove shell melt.
+function run_Europa_until_depleted(output_dir,kc)
+% Run a fresh Europa case until <=0.5% of initial shell melt remains.
+% Optional kc defaults to 1.85e-8 m^2; k=kc*phi^3 in both runs.
 root=fileparts(mfilename('fullpath'));addpath(root);
-if nargin<1
- output_dir=fullfile(root,'..','Output',['Europa_kc_1.850e-08_until_depleted_' datestr(now,'yyyymmdd_HHMMSS')]);
+if nargin<2 || isempty(kc),kc=1.85e-8;end
+validateattributes(kc,{'numeric'},{'scalar','real','finite','positive'});
+if nargin<1 || isempty(output_dir)
+ output_dir=fullfile(root,'..','Output',sprintf('Europa_kc_%.3e_until_depleted_%s',kc,datestr(now,'yyyymmdd_HHMMSS')));
 end
 if ~isfolder(output_dir),mkdir(output_dir);end
 assert(~isfile(fullfile(output_dir,'checkpoint.mat')),'Use a fresh output folder.');
 diary(fullfile(output_dir,'run.log'));cleanup=onCleanup(@() diary('off'));
-options=struct('kc',1.85e-8,'max_steps',10000000,'final_years',Inf, ...
+options=struct('kc',kc,'max_steps',10000000,'final_years',Inf, ...
  'stop_on_melt_loss',true,'remaining_melt_fraction',0.005, ...
  'snapshot_steps',[0:10 25 50 100 250 500 1000], ...
  'snapshot_years',[0.001 0.003 0.005 0.008 0.01 0.013 0.016 0.03 0.06 0.1 0.11 0.16 0.29 0.3 0.42 0.482 0.62 0.93 1 1.24 1.84 3 5.196 10 30 100], ...
@@ -20,7 +22,7 @@ copyfile(fullfile(root,'*.m'),source_dir);
 copyfile(fullfile(root,'..','initial_conditions','ic03321_100.mat'),fullfile(output_dir,'ic03321_100.mat'));
 save(fullfile(output_dir,'run_options.mat'),'options');
 fid=fopen(fullfile(output_dir,'run_configuration.json'),'w');fprintf(fid,'%s',jsonencode(options));fclose(fid);
-fprintf('START EUROPA DEPLETION: kc=1.85e-8 m2; k=kc*phi^3; stop at <=0.5 percent initial melt integrated over all z>=0 cells. No final-year cutoff.\n');
+fprintf('START EUROPA DEPLETION: kc=%.12g m2; k=kc*phi^3; stop at <=0.5 percent initial melt integrated over all z>=0 cells. No final-year cutoff.\n',kc);
 try
  r=run_darcy_stokes_case('impact_melt_europa',options);
  assert(strcmp(r.status,'melt_depleted') && r.depletion_reached, ...

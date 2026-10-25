@@ -1,0 +1,28 @@
+--- simple_test_1D_noflow_base.m
++++ simple_test_1D_half_water_closed.m
+@@ -1,6 +1,6 @@
+ % CHANGE NF-01 START: Separate callable solver, options argument and documented closed-domain behavior.
+ % CHANGE NF-01 SOURCE: original lines 1-1; see NOFLOW_BASE_CHANGES.diff.
+-function result = simple_test_1D_noflow_base(fn,eta_0,E_a,kc,test,simple_test,options)
++function result = simple_test_1D_half_water_closed(fn,eta_0,E_a,kc,test,simple_test,options)
+ % Separate variant of simple_test_1D: closed, insulated top, base and sides.
+ % Enthalpy and melt fraction evolve freely in EVERY cell, including the lid.
+ % Includes the permeability-matrix and pressure-head consistency fixes.
+@@ -184,7 +184,7 @@
+     end
+     if simple_test == 'temprate_homog_column'
+     TGr   =     ones(size(phiGr));  %make the temperature 273 K everywhere
+-    phiGr = 0.5*ones(size(phiGr));  %make porosity 50% everywhere
++    phiGr = double(Y > (Grid.p.ymin+Grid.p.ymax)/2); % HALF TEST: 0 below midpoint, 1 above
+     end    
+ 
+         
+@@ -1001,7 +1001,7 @@
+ function options = nf_options(options)
+ defaults = struct('max_steps',1000,'snapshot_steps',[0 100 250 500 1000], ...
+     'legacy_outputs',false,'evolve_tracers',false,'stop_on_melt_loss',false, ...
+-    'output_dir',fullfile(fileparts(mfilename('fullpath')),'..','Output','closed_lid'));
++    'output_dir',fullfile(fileparts(mfilename('fullpath')),'..','Output','half_water_closed'));
+ names = fieldnames(defaults);
+ for k=1:numel(names)
+     if ~isfield(options,names{k}), options.(names{k})=defaults.(names{k}); end

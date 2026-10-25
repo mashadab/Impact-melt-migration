@@ -1,0 +1,63 @@
+--- corrected_shared_centered_S3_baseline
++++ darcy_stokes_2D_centered_cold_bottom_S3.m
+@@ -1,6 +1,6 @@
+ % CHANGE NF-01 START: Separate callable solver, options argument and documented closed-domain behavior.
+ % CHANGE NF-01 SOURCE: original lines 1-1; see NOFLOW_BASE_CHANGES.diff.
+-function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_test,options)
++function result = darcy_stokes_2D_centered_cold_bottom_S3(case_key,fn,eta_0,E_a,kc,test,simple_test,options)
+ % Separate variant of simple_test_1D: closed, insulated top, base and sides.
+ % Enthalpy and melt fraction evolve freely in EVERY cell, including the lid.
+ % Includes the permeability-matrix and pressure-head consistency fixes.
+@@ -31,6 +31,7 @@
+ % CHANGE NF-02 SOURCE: original lines 21-21; see NOFLOW_BASE_CHANGES.diff.
+ 
+     % CASE KEY: only setup branches; flow/transport below are shared S3 code.
++    assert(strcmp(case_key,'centered_water'),'This separate copy is only for the cold-bottom centered test.');
+     case_key = validatestring(case_key,{'porosity_wave','impact_melt_europa','centered_water'});
+     is_wave = strcmp(case_key,'porosity_wave');
+     is_centered_water = strcmp(case_key,'centered_water');
+@@ -204,7 +205,8 @@
+     Grid=build_stokes_grid_cyl(Gridp);
+     [X,Y]=meshgrid(Grid.p.xc,Grid.p.yc);
+     Xc=X(:); Yc=Y(:);
+-    TGr=ones(size(X)); % 273 K everywhere, initial condition only
++    TGr=ones(size(X)); % upper half: original 273 K, initial condition only
++    TGr(Y<=(Grid.p.ymin+Grid.p.ymax)/2)=(253.15-T_t)/DT; % ONLY physical setup change: bottom half -20 C
+     phiGr=double(Y>(Grid.p.ymin+Grid.p.ymax)/2 & ...
+         X>Grid.p.xmin+0.25*(Grid.p.xmax-Grid.p.xmin) & ...
+         X<Grid.p.xmin+0.75*(Grid.p.xmax-Grid.p.xmin));
+@@ -383,6 +385,8 @@
+         'boundary_abs_advective_heat','boundary_abs_conductive_heat'};
+     result.boundary_description = 'closed, insulated top/base/sides; enthalpy and melt fraction free in all cells';
+     result.case_key = case_key;
++    result.test_variant='centered_water_cold_bottom';
++    result.initial_bottom_temperature_K=253.15;
+     result.baseline = 'porosity_wave_2D_Jake_minimal.m';
+     result.permeability_exponent=2;
+     if ~is_wave, result.permeability_exponent=3; end
+@@ -420,6 +424,7 @@
+     next_output_year=options.snapshot_interval_years;
+     requested_snapshot_index=1;
+     stop_requested=false;
++    cold_budget=[]; % read-only cumulative thermal accounting
+ 
+     
+     %% temporal evolution
+@@ -644,6 +649,7 @@
+                 diagnostic_H0,diagnostic_T0,diagnostic_phi0,H,T,phi,vm,qr,p_head, ...
+                 Kdprime,kappaFace,Ae,Aq,Pi_6);
+             diagnostic.permeability_m2=full(diag(Kdprime))*kc;
++            [diagnostic,cold_budget]=centered_cold_bottom_heat_budget(diagnostic,Grid,d,cold_budget);
+         end
+ % CHANGE NF-11 START: Make passive-tracer updates optional; disabled for these column tests.
+ % CHANGE NF-11 SOURCE: original lines 466-466; see NOFLOW_BASE_CHANGES.diff.
+@@ -781,7 +787,8 @@
+         end
+         if is_centered_water
+             stop_requested=record_centered_water_step(options,i,tTot,diagnostic_flow_time, ...
+-                diagnostic,T,Grid,d,energy_error,result.initial_enthalpy_total,result.steps(end)==i);
++                diagnostic,T,Grid,d,energy_error,result.initial_enthalpy_total, ...
++                result.steps(end)==i || diagnostic.cold_bottom.first_new_liquid);
+         end
+         if any(~isfinite(H)) || any(~isfinite(T)) || any(~isfinite(phi)) || min(T)*DT+T_t <= 0
+             result.status = 'failed';

@@ -1,0 +1,172 @@
+[
+  {
+    "original_path": "tmp/research_ppt_build_20261025/prepare_materials.py",
+    "archive_path": "presentation/prepare_materials.py",
+    "sha256": "6fb24b53b239ad0f128be872a4407ec62f38df99eaa32b6e810a68ae9e9d3062"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/encode_research_videos.m",
+    "archive_path": "presentation/encode_research_videos.m",
+    "sha256": "b7172a207a897869172af7e250abfaf84ab7b2f0f648fafe3192a53b3e4934e8"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/build_deck.mjs",
+    "archive_path": "presentation/build_deck.mjs",
+    "sha256": "ed2208b08464331c4a5e8d0e4c84a45a619fbd5cce32a85544ab797d5fbfa638"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/research_notes.json",
+    "archive_path": "presentation/research_notes.json",
+    "sha256": "8b4f8275adad0ab5ffdfa260c2624647fb7419c85fc3514f586cf205573fc3fb"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/add_native_movies.ps1",
+    "archive_path": "presentation/add_native_movies.ps1",
+    "sha256": "65de9f17f145c14689488acedb12cfa4b42ca381585e99c6cbe02aaa25009d6c"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/normalize_media_links.py",
+    "archive_path": "presentation/normalize_media_links.py",
+    "sha256": "4e7ce9d93b20f5bba107cc34ee8b98cdb24924839424653914dcd8af02d1462b"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/finalize_deck.mjs",
+    "archive_path": "presentation/finalize_deck.mjs",
+    "sha256": "a7d230fc2f3c24391971146f02472c97d43e93460eab8d1749d87368b459a06a"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/render_final_powerpoint.ps1",
+    "archive_path": "presentation/render_final_powerpoint.ps1",
+    "sha256": "60d8733d94e1764775433e8ec5afd21397ae1258fe0e43a157b4f1de9eb4769b"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/package_deliverables.py",
+    "archive_path": "presentation/package_deliverables.py",
+    "sha256": "2e6a67d008f3a26b3764fdd3460b8ecf348b6bc280bf694e2f73c6a2a9b33929"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/make_contact_sheet.py",
+    "archive_path": "presentation/make_contact_sheet.py",
+    "sha256": "1ec59b3b739d2a0c9d2c369de11a1e52155a560a161b3922d8b6f6cf69ef1f8a"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/requirements.json",
+    "archive_path": "presentation/requirements.json",
+    "sha256": "ae2405d5016bfe1b8101a7846c63528bb0b300a6bfc0d17799b3eb5513d5599c"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/materials.json",
+    "archive_path": "presentation/materials.json",
+    "sha256": "a403ada9173622b20e0a5a58ce7ff73b63e1b8250d44f69ebfc2b2c04c7ff95c"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/video_slots.json",
+    "archive_path": "presentation/video_slots.json",
+    "sha256": "3201881419f3707c062b22713299eb9b5a4b30c55518c86895ca58b447cc58aa"
+  },
+  {
+    "original_path": "tmp/research_ppt_build_20261025/slide_index.json",
+    "archive_path": "presentation/slide_index.json",
+    "sha256": "5719db7d962f1f84acac3834921cf186b24f8ee37d28e71e310a1d57667dd914"
+  },
+  {
+    "original_path": "tmp/analyze_half_water_endpoint.py",
+    "archive_path": "scratch_sources/analyze_half_water_endpoint.py",
+    "sha256": "fd1a2d41683f51d0bd123801a35441ebba891a72433bfa0f58e279a5d0d60bed"
+  },
+  {
+    "original_path": "tmp/capture_centered_water_reference.m",
+    "archive_path": "scratch_sources/capture_centered_water_reference.m",
+    "sha256": "06a36786c5eabc16ecd01a4fe90902c20a4d6f692932b58594a17bed99129eb9"
+  },
+  {
+    "original_path": "tmp/check_half_water_interface.py",
+    "archive_path": "scratch_sources/check_half_water_interface.py",
+    "sha256": "bb8163b4ef7bf77dd0c1deadb0b8d9b1322a1385a824482899c91446623242d7"
+  },
+  {
+    "original_path": "tmp/check_saved_corrected_water.m",
+    "archive_path": "scratch_sources/check_saved_corrected_water.m",
+    "sha256": "f0ba2ce0894464171fcb3b555616fee1b423c3654240428be26e18e3bfbabc62"
+  },
+  {
+    "original_path": "tmp/create_centered_blob_test.py",
+    "archive_path": "scratch_sources/create_centered_blob_test.py",
+    "sha256": "8d93c67f213258b3a946daa0306e3a75ddaacf01e3eb1ddb9e4b3dde39cea2df"
+  },
+  {
+    "original_path": "tmp/create_minimal_half_water_test.py",
+    "archive_path": "scratch_sources/create_minimal_half_water_test.py",
+    "sha256": "ca31b4f053bd539287ca7a95a54df59fc2f7959737145c4789f58b1a3870a1d9"
+  },
+  {
+    "original_path": "tmp/document_corrected_water_case.py",
+    "archive_path": "scratch_sources/document_corrected_water_case.py",
+    "sha256": "5609d4e3e4a521870a7712e3574a8891c27c3d169ab2f76913c363aba0fb7693"
+  },
+  {
+    "original_path": "tmp/inspect_corrected_water_match.m",
+    "archive_path": "scratch_sources/inspect_corrected_water_match.m",
+    "sha256": "837751aa8e3aed2ca2fcf40b7333ebf052098b7c13ff263c4c48826032b51674"
+  },
+  {
+    "original_path": "tmp/plot_centered_permeability_proof.m",
+    "archive_path": "scratch_sources/plot_centered_permeability_proof.m",
+    "sha256": "8810d18d47576fdb917436502868c5d9225671c778e790a7d209220778b2eda1"
+  },
+  {
+    "original_path": "tmp/prepare_centered_cold_bottom.py",
+    "archive_path": "scratch_sources/prepare_centered_cold_bottom.py",
+    "sha256": "8994dafd8f82562b2f265f8d6c05d3586647bb3fb7e1217cd97d17c712ad6271"
+  },
+  {
+    "original_path": "tmp/prepare_centered_continuation.py",
+    "archive_path": "scratch_sources/prepare_centered_continuation.py",
+    "sha256": "ffb9220a39f8a9f0e0046c84955fd9e893c61fd3292cf9c37cbd612855a097b2"
+  },
+  {
+    "original_path": "tmp/prepare_centered_water_100yr.py",
+    "archive_path": "scratch_sources/prepare_centered_water_100yr.py",
+    "sha256": "1f208410b0867064a653736851dad0d5da3e603140515eef1831878c2bc4b322"
+  },
+  {
+    "original_path": "tmp/prepare_flat_centered_videos.py",
+    "archive_path": "scratch_sources/prepare_flat_centered_videos.py",
+    "sha256": "efd3c0919b04ddf1edef2ed5c672aa33c846cffa099f26e2d0c40b635b416df9"
+  },
+  {
+    "original_path": "tmp/render_humanized_water_figures.m",
+    "archive_path": "scratch_sources/render_humanized_water_figures.m",
+    "sha256": "233994ed784353d916dfb30f1f33dc1173127c452d6a8b57eda51bc031ef77c8"
+  },
+  {
+    "original_path": "tmp/run_centered_permeability_proof.m",
+    "archive_path": "scratch_sources/run_centered_permeability_proof.m",
+    "sha256": "4c7aa27e4fe73734d89a51c73036772d4cc52ee74ab89381cf126aee42ea832d"
+  },
+  {
+    "original_path": "tmp/start_centered_blob_continuation.m",
+    "archive_path": "scratch_sources/start_centered_blob_continuation.m",
+    "sha256": "3cd183fea628d95e07636285745786388bc233bffff594aab463067e7ee72ba7"
+  },
+  {
+    "original_path": "tmp/start_half_water_1yr.m",
+    "archive_path": "scratch_sources/start_half_water_1yr.m",
+    "sha256": "3da82cb4a8ebd3241728b6e621b610cfe303b1d7b15344b2ee2cc8143fd7daa9"
+  },
+  {
+    "original_path": "tmp/verify_corrected_centered_water.m",
+    "archive_path": "scratch_sources/verify_corrected_centered_water.m",
+    "sha256": "b7c331f5adf39296cdcdeb7895b5692ae6d098e9ec536c8901e885e56bfc7b84"
+  },
+  {
+    "original_path": "tmp/verify_Europa_kc16_launch.py",
+    "archive_path": "scratch_sources/verify_Europa_kc16_launch.py",
+    "sha256": "13e95a65ae4618a0badfe99c1d88b34001d2e806e370478e9f55c111c33f907f"
+  },
+  {
+    "original_path": "tmp/verify_water_comparison_videos.m",
+    "archive_path": "scratch_sources/verify_water_comparison_videos.m",
+    "sha256": "e39214fedf767d0739210dcb15978694e186c665791e2fe88c6f987464f66f1a"
+  }
+]

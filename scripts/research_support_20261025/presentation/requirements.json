@@ -1,0 +1,24 @@
+{
+  "requiredNativeTableOwnerSlides": [
+    2,
+    3,
+    7,
+    11,
+    24,
+    25,
+    26
+  ],
+  "requiredNativeChartOwnerSlides": [
+    6,
+    16,
+    19,
+    21
+  ],
+  "fontPolicy": {
+    "basis": "user_request",
+    "families": [
+      "Times New Roman"
+    ]
+  },
+  "slideCount": 27
+}

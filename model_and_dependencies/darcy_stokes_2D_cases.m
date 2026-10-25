@@ -31,8 +31,10 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
 % CHANGE NF-02 SOURCE: original lines 21-21; see NOFLOW_BASE_CHANGES.diff.
 
     % CASE KEY: only setup branches; flow/transport below are shared S3 code.
-    case_key = validatestring(case_key,{'porosity_wave','impact_melt_europa'});
+    case_key = validatestring(case_key,{'porosity_wave','impact_melt_europa','centered_water'});
     is_wave = strcmp(case_key,'porosity_wave');
+    is_centered_water = strcmp(case_key,'centered_water');
+    is_europa = strcmp(case_key,'impact_melt_europa');
     if nargin < 8, options = struct(); end
     if ~isfield(options,'output_dir')
         options.output_dir=fullfile(fileparts(mfilename('fullpath')),'..','Output',case_key);
@@ -76,7 +78,7 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
 % END CHANGE NF-03
     % S3 CHANGE: impact-file load removed; exact wave CSV is loaded below.
 
-    else
+    elseif is_europa
         fp=fullfile(fileparts(mfilename('fullpath')),'..','initial_conditions','ic');
         load([fp fn '_100.mat'],'T','phi');
     end
@@ -159,7 +161,7 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
     
     % non-dimensionalize temperature
     % S3 CHANGE: initial dimensionless temperature is set in TGr below.
-    if ~is_wave, T = (T-T_t)/DT; end
+    if is_europa, T = (T-T_t)/DT; end
 
     % thermal condutvity in convective ocean, set to maintain vertical
     % isotherm in ocean
@@ -192,6 +194,21 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
     TGr=ones(size(phiGr)); % INITIAL temperature only, not prescribed thereafter
     phiOrig=sum(phiGr(:).*Grid.p.V)*d^3;
     % S3 CHANGE END: original equations and time stepping below retained.
+
+    elseif is_centered_water
+    % SETUP ONLY: the same Cartesian domain and centered upper-half water.
+    grRes=100; ocTh=grRes/5;
+    Gridp.xmin=0; Gridp.xmax=2; Gridp.Nx=grRes;
+    Gridp.ymin=-ocTh/grRes; Gridp.ymax=1; Gridp.Ny=grRes+ocTh;
+    Gridp.geom='cartesian';
+    Grid=build_stokes_grid_cyl(Gridp);
+    [X,Y]=meshgrid(Grid.p.xc,Grid.p.yc);
+    Xc=X(:); Yc=Y(:);
+    TGr=ones(size(X)); % 273 K everywhere, initial condition only
+    phiGr=double(Y>(Grid.p.ymin+Grid.p.ymax)/2 & ...
+        X>Grid.p.xmin+0.25*(Grid.p.xmax-Grid.p.xmin) & ...
+        X<Grid.p.xmin+0.75*(Grid.p.xmax-Grid.p.xmin));
+    phiOrig=sum(phiGr(:).*Grid.p.V)*d^2; % volume per metre of out-of-plane depth
 
     else
     %% build cylindirical grid for numerical solution
@@ -278,7 +295,7 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
     %% Build boundary conditions for temperature and flow equation
 % CHANGE NF-05 START: Remove top/base enthalpy constraints; close and insulate every outer face.
 % CHANGE NF-05 SOURCE: original lines 216-255; see NOFLOW_BASE_CHANGES.diff.
-    if is_wave
+    if is_wave || is_centered_water
     % Closed, insulated domain: no prescribed enthalpy or melt fraction.
     Param = struct('H',{},'g',{},'dof_dir',{});
     Param(1).H = struct('dof_dir',{},'dof_f_dir',{},'g',{},'dof_neu',{},'dof_f_neu',{},'qb',{},'dof_out',{});
@@ -369,7 +386,7 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
     result.baseline = 'porosity_wave_2D_Jake_minimal.m';
     result.permeability_exponent=2;
     if ~is_wave, result.permeability_exponent=3; end
-    if ~is_wave
+    if is_europa
         result.boundary_description='impermeable material walls; fixed cold surface; prescribed basal heat flux; free basal enthalpy';
     end
     result.enthalpy_dirichlet_count = numel(Param.H.dof_dir);
@@ -379,7 +396,7 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
     cumulative_heat_input = 0; % diagnostics only; no change to time evolution
     result.output_file = fullfile(options.output_dir,sprintf('noflow_kc_%0.3e.mat',kc));
     result = nf_snapshot(result,0,0,T,phi,H,Grid,d,DT,T_t);
-    if ~is_wave
+    if is_europa
         result.melt_budget=europa_melt_budget([],phi,Grid.p,d,0,0,[]);
         phiOrig=result.melt_budget.initial_volume_m3(2); % actual initialized shell melt
         result.initial_shell_melt_m3=phiOrig;
@@ -395,13 +412,14 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
         result.history=result.history([],:);
         result.final_state=struct('H',H,'T_dimensionless',T,'phi',phi,'Grid',Grid);
         save(result.output_file,'result');
-        if ~is_wave, writetable(result.melt_budget.history,fullfile(options.output_dir,'melt_budget.csv')); end
+        if is_europa, writetable(result.melt_budget.history,fullfile(options.output_dir,'melt_budget.csv')); end
         return; % initialization only: no flow solve or time advancement
     end
     run_timer = tic;
     % S3 RUN CONTROL: output interval, independent of physical equations.
     next_output_year=options.snapshot_interval_years;
     requested_snapshot_index=1;
+    stop_requested=false;
 
     
     %% temporal evolution
@@ -412,6 +430,10 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
         [T,phi] = enthMelt(H,mixZone,nonT_fun,phi_fun,TWater_fun);
         %T(T>1) = 1;
         H = porNonH_fun(phi,T);
+        if is_centered_water
+            diagnostic_H0=H; diagnostic_T0=T; diagnostic_phi0=phi;
+            diagnostic_flow_time=tTot;
+        end
         %% Bouyancy force as the body force to Stokes flow
         %temp bouyancy
         Tplot= reshape(T,Grid.p.Ny,Grid.p.Nx);
@@ -617,6 +639,12 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
         %T(T>1) = 1;
         H = porNonH_fun(phi,T);
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+        if is_centered_water
+            diagnostic=centered_blob_diagnostics(Grid,d,D_T,t_c,dt, ...
+                diagnostic_H0,diagnostic_T0,diagnostic_phi0,H,T,phi,vm,qr,p_head, ...
+                Kdprime,kappaFace,Ae,Aq,Pi_6);
+            diagnostic.permeability_m2=full(diag(Kdprime))*kc;
+        end
 % CHANGE NF-11 START: Make passive-tracer updates optional; disabled for these column tests.
 % CHANGE NF-11 SOURCE: original lines 466-466; see NOFLOW_BASE_CHANGES.diff.
         if options.evolve_tracers
@@ -683,6 +711,13 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
         phiFracRem = [phiFracRem phiRem/phiOrig];
 
         
+        elseif is_centered_water
+            % Cartesian test inventory; the Europa delivery plane is not used.
+            tTot=tTot+dt*t_c/(3.154e7); tVec=[tVec tTot];
+            phiGr=reshape(phi,Grid.p.Ny,Grid.p.Nx);
+            phiRem=sum(phi.*Grid.p.V)*d^2;
+            netMelt=[netMelt phiRem]; phiFracRem=[phiFracRem phiRem/phiOrig];
+
         else
             % Europa volume budgets: shell z>=0; delivery plane exactly z=0.
             tTot=tTot+dt*t_c/(3.154e7);
@@ -705,7 +740,7 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
         fb = Grid.p.dof_f_ymin;
         ft = Grid.p.dof_f_ymax;
         conductive = -kappaFace*(Gp*T);
-        if ~is_wave, conductive(fb)=options.basal_heat_flux; end
+        if is_europa, conductive(fb)=options.basal_heat_flux; end
         enthalpy_now = sum(H.*Grid.p.V);
         energy_error = enthalpy_now-result.initial_enthalpy_total-cumulative_heat_input;
         if i>size(result.history,1)
@@ -723,7 +758,7 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
             fprintf('no-flow kc=%g step=%d/%d t=%.6g yr wall=%.1fs T=[%.6g %.6g] base_phi=[%.6g %.6g] E_error=%.3g\n', ...
                 kc,i,options.max_steps,tTot,toc(run_timer),min(T)*DT+T_t,max(T)*DT+T_t, ...
                 min(phi(Grid.p.dof_ymin)),max(phi(Grid.p.dof_ymin)),energy_error);
-            if ~is_wave
+            if is_europa
                 fprintf('shell_melt=%.9g km3 remaining_fraction=%.9g target_fraction=%.9g delivered_net=%.9g km3 refrozen_net_shell=%.9g km3\n', ...
                     phiRem/1e9,phiFracRem(end),options.remaining_melt_fraction,phiDrain1/1e9,result.melt_budget.refrozen_net_m3(end,2)/1e9);
             end
@@ -738,11 +773,15 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
             end
             next_output_year=tTot+options.snapshot_interval_years;
             result = nf_snapshot(result,i,tTot,T,phi,H,Grid,d,DT,T_t);
-            if ~is_wave && options.save_state_snapshots
+            if is_europa && options.save_state_snapshots
                 save_Europa_state(options.output_dir,i,tTot,tTot-dt*t_c/3.154e7, ...
                     T,phi,H,Grid,d,DT,T_t,vm,vf,qr,p_head,p,overpressure,eta_0,D_T,kc,nn);
             end
             save(result.output_file,'result');
+        end
+        if is_centered_water
+            stop_requested=record_centered_water_step(options,i,tTot,diagnostic_flow_time, ...
+                diagnostic,T,Grid,d,energy_error,result.initial_enthalpy_total,result.steps(end)==i);
         end
         if any(~isfinite(H)) || any(~isfinite(T)) || any(~isfinite(phi)) || min(T)*DT+T_t <= 0
             result.status = 'failed';
@@ -754,7 +793,7 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
         if i==1 || mod(i,options.checkpoint_steps)==0
             save(fullfile(options.output_dir,'checkpoint.mat'),'H','T','phi','Grid', ...
                 'tTot','i','d','options','-v7.3');
-            if ~is_wave
+            if is_europa
                 progress=struct('step',i,'time_years',tTot,'melt_remaining_m3',phiRem, ...
                     'remaining_fraction',phiFracRem(end),'target_fraction',options.remaining_melt_fraction, ...
                     'delivered_net_m3',phiDrain1,'refrozen_net_shell_m3',result.melt_budget.refrozen_net_m3(end,2));
@@ -762,12 +801,12 @@ function result = darcy_stokes_2D_cases(case_key,fn,eta_0,E_a,kc,test,simple_tes
                 writetable(result.melt_budget.history,fullfile(options.output_dir,'melt_budget.csv'));
             end
         end
-        if tTot>=options.final_years-1e-10, break; end
+        if stop_requested || tTot>=options.final_years-1e-10, break; end
 
         % condition for ending simulation
         if options.stop_on_melt_loss && ((is_wave && (phiFracRem(end)<termFrac || i>10000)) ...
                 || (~is_wave && phiFracRem(end)<=options.remaining_melt_fraction))
-            if ~is_wave, result.stop_reason='melt_depleted'; end
+            if is_europa, result.stop_reason='melt_depleted'; end
             %  point
             save([options.output_dir filesep fn '_eta0_' num2str(log10(eta_0)) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'kc' num2str(kc) 'C.mat'],...
                 'Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
@@ -1142,7 +1181,7 @@ end % optional legacy video
     if isfinite(options.final_years) && tTot<options.final_years-1e-10 && ~strcmp(result.status,'failed')
         result.status='step_limit';
     end
-    if ~is_wave && options.stop_on_melt_loss && ~strcmp(result.status,'failed')
+    if is_europa && options.stop_on_melt_loss && ~strcmp(result.status,'failed')
         result.remaining_shell_melt_fraction=phiFracRem(end);
         result.depletion_reached=phiFracRem(end)<=options.remaining_melt_fraction;
         if result.depletion_reached
@@ -1153,6 +1192,7 @@ end % optional legacy video
             result.status='time_limit';
         end
     end
+    if stop_requested && ~strcmp(result.status,'failed'), result.status='stopped_by_user'; end
     result.completed_steps = i;
     result.history = result.history(1:i,:);
     if result.steps(end) ~= i
@@ -1174,12 +1214,12 @@ end % optional legacy video
     result.max_boundary_advective_heat_flux = max(result.history(:,22));
     result.max_boundary_conductive_heat_flux = max(result.history(:,23));
     result.max_enthalpy_balance_error = max(abs(result.history(:,11)));
-    if ~is_wave && options.save_state_snapshots
+    if is_europa && options.save_state_snapshots
         save_Europa_state(options.output_dir,i,tTot,tTot-dt*t_c/3.154e7, ...
             T,phi,H,Grid,d,DT,T_t,vm,vf,qr,p_head,p,overpressure,eta_0,D_T,kc,nn);
     end
     save(result.output_file,'result');
-    if ~is_wave, writetable(result.melt_budget.history,fullfile(options.output_dir,'melt_budget.csv')); end
+    if is_europa, writetable(result.melt_budget.history,fullfile(options.output_dir,'melt_budget.csv')); end
     fprintf('FINISHED no-flow kc=%g steps=%d status=%s T=[%.9g %.9g] base_phi=[%.6g %.6g] E_error=%.3g\n', ...
         kc,i,result.status,min(T)*DT+T_t,max(T)*DT+T_t, ...
         min(phi(Grid.p.dof_ymin)),max(phi(Grid.p.dof_ymin)),result.max_enthalpy_balance_error);

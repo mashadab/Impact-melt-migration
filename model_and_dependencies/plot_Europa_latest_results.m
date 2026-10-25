@@ -1,12 +1,21 @@
 function plot_Europa_latest_results(run_dir)
-% Read matched checkpoint and CSV rows only; simulation is not modified.
+% Read final state after completion, otherwise matched checkpoint/CSV rows.
 if nargin<1
  root=fileparts(mfilename('fullpath'));
  run_dir=fullfile(root,'..','Output','Europa_kc_1.850e-08_until_depleted_20261023_195524');
 end
 for attempt=1:5
  try
-  c=load(fullfile(run_dir,'checkpoint.mat'),'T','phi','Grid','d','tTot','i');
+  if isfile(fullfile(run_dir,'COMPLETE.txt'))
+   summary=jsondecode(fileread(fullfile(run_dir,'summary.json')));
+   saved=load(fullfile(run_dir,'states',sprintf('state_%08d.mat',summary.steps)),'state');
+   s=saved.state;
+   c=struct('T',(s.temperature_K-100)/173,'phi',s.phi,'Grid',s.Grid, ...
+    'd',s.length_scale_m,'tTot',s.time_years,'i',s.step,'kc_m2',s.kc_m2);
+  else
+   c=load(fullfile(run_dir,'checkpoint.mat'),'T','phi','Grid','d','tTot','i','options');
+   c.kc_m2=c.options.kc;
+  end
   b=readtable(fullfile(run_dir,'melt_budget.csv'));
   b=b(b.time_years<=c.tTot+1e-8,:);
   assert(~isempty(b) && abs(b.time_years(end)-c.tTot)<1e-8,'Budget/checkpoint synchronization pending');
@@ -15,18 +24,16 @@ for attempt=1:5
   if attempt==5,rethrow(err);end;pause(1);
  end
 end
-G=c.Grid.p;[X,Z]=meshgrid(G.xc*c.d/1000,G.yc*c.d/1000);
+G=c.Grid.p;x=G.xc*c.d/1000;z=G.yc*c.d/1000;
 T=reshape(c.T*173+100,G.Ny,G.Nx);P=reshape(c.phi,G.Ny,G.Nx);
 f=figure('Visible','off','Color','w','Position',[50 50 1520 1120]);
 tl=tiledlayout(2,2,'TileSpacing','compact','Padding','compact');
-ax=nexttile(tl);contourf(ax,X,Z,T,linspace(100,273,36),'LineStyle','none');
-hold(ax,'on');[C,h]=contour(ax,X,Z,T,[150 200 250 270],'Color',[.2 .2 .2],'LineWidth',.45);clabel(C,h,'FontSize',8);
+ax=nexttile(tl);imagesc(ax,x,z,T);set(ax,'YDir','normal');
 colormap(ax,parula(256));caxis(ax,[100 273]);cb=colorbar(ax);cb.Label.String='Temperature [K]';
-title(ax,'Temperature contours');yline(ax,0,'k--','LineWidth',1.2);
-ax2=nexttile(tl);contourf(ax2,X,Z,P,0:.025:1,'LineStyle','none');
-hold(ax2,'on');contour(ax2,X,Z,P,[.001 .1 .5 .9],'Color',[.15 .15 .15],'LineWidth',.5);
+title(ax,'Temperature');yline(ax,0,'k--','LineWidth',1.2);
+ax2=nexttile(tl);imagesc(ax2,x,z,P);set(ax2,'YDir','normal');
 colormap(ax2,turbo(256));caxis(ax2,[0 1]);cb=colorbar(ax2);cb.Label.String='Melt volume fraction';
-title(ax2,'Melt-fraction contours');yline(ax2,0,'w--','LineWidth',1.2);
+title(ax2,'Melt fraction');yline(ax2,0,'w--','LineWidth',1.2);
 for a=[ax ax2]
  xlabel(a,'Radius [km]');ylabel(a,'Elevation [km]');xlim(a,[0 20]);ylim(a,[-2 10]);set(a,'Layer','top','FontSize',11);
 end
@@ -43,10 +50,10 @@ plot(ax4,b.time_years,b.refrozen_net_shell_m3/1e9,'Color',[.83 .37 .08],'LineWid
 xlabel(ax4,'Time [years]');ylabel(ax4,'Cumulative net volume [km^3]');
 title(ax4,'Net delivery and net refreezing');legend(ax4,{'Delivered across z = 0','Refrozen in shell (net)'},'Location','northwest','Box','off');grid(ax4,'on');box(ax4,'off');
 for a=[ax3 ax4],set(a,'FontSize',11);xlim(a,[0 c.tTot]);end
-title(tl,sprintf('Europa | %.5g simulated years | iteration %d | kc = 1.85e-8 m^2 | cubic permeability',c.tTot,c.i),'FontSize',19);
-xlabel(tl,'Dashed line in maps: z = 0. The outer base remains impermeable. Plots use a matched saved checkpoint and budget history.','FontSize',11);
+title(tl,sprintf('Europa | %.5g simulated years | iteration %d | kc = %.3g m^2 | cubic permeability',c.tTot,c.i,c.kc_m2),'FontSize',19);
+xlabel(tl,'Dashed line: z = 0. Impermeable outer base. Saved grid cells with no interpolation; matched budget history.','FontSize',11);
 file=fullfile(run_dir,sprintf('Europa_latest_results_step_%08d.png',c.i));exportgraphics(f,file,'Resolution',150);close(f);
-s=struct('step',c.i,'time_years',c.tTot,'remaining_shell_km3',b.melt_shell_m3(end)/1e9, ...
+s=struct('step',c.i,'time_years',c.tTot,'kc_m2',c.kc_m2,'data_interpolation',false,'remaining_shell_km3',b.melt_shell_m3(end)/1e9, ...
  'initial_shell_km3',b.melt_shell_m3(1)/1e9,'remaining_fraction',b.melt_shell_m3(end)/b.melt_shell_m3(1), ...
  'delivered_net_km3',b.delivered_net_m3(end)/1e9,'refrozen_net_shell_km3',b.refrozen_net_shell_m3(end)/1e9, ...
  'front_elevation_km',b.front_elevation_km(end),'plot_path',file);

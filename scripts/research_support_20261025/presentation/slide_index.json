@@ -1,0 +1,236 @@
+[
+  {
+    "number": 1,
+    "title": "Melt migration through ice",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WATER_S3_SETUP.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WARM_COLD_CONDUCTION.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/EUROPA_MIGRATION_SIMPLE_EXPLANATION.md"
+    ]
+  },
+  {
+    "number": 2,
+    "title": "Tests covered in this presentation",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/S3_CASE_SWITCH_README.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/FLAT_AND_CENTERED_WATER_VIDEOS.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_COLD_BOTTOM_S3.md"
+    ]
+  },
+  {
+    "number": 3,
+    "title": "The numerical method and boundary conditions",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WATER_S3_SETUP.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_COLD_BOTTOM_S3.diff",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/S3_CASE_SWITCH_README.md"
+    ]
+  },
+  {
+    "number": 4,
+    "title": "Porosity wave benchmark",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Jake_2D_minimal_800_years_actual_kappa_head_reference/live_comparison/summary.txt",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Jake_2D_minimal_800_years_actual_kappa_head_reference/COMPLETE.txt",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Jake_2D_minimal_800_years_actual_kappa_head_reference/RUN_SETTINGS.txt"
+    ]
+  },
+  {
+    "number": 5,
+    "title": "Porosity wave movie",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Jake_2D_minimal_800_years_actual_kappa_head_reference/s3_melt_temperature.avi"
+    ]
+  },
+  {
+    "number": 6,
+    "title": "Europa permeability comparison",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Europa_permeability_comparison_20261024/comparison.json",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/EUROPA_RESEARCH_OUTPUTS.md"
+    ]
+  },
+  {
+    "number": 7,
+    "title": "Europa endpoint liquid budgets",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Europa_permeability_comparison_20261024/comparison.json",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/EUROPA_REPRODUCIBILITY.md"
+    ]
+  },
+  {
+    "number": 8,
+    "title": "Europa movies",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/EUROPA_VIDEO.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Europa_kc_1.850e-08_until_depleted_20261023_195524/research_video/video_verification.json",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Europa_kc_1.850e-16_until_depleted_20261024_085440/research_video/video_verification.json"
+    ]
+  },
+  {
+    "number": 9,
+    "title": "First wetting with zero Darcy permeability",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/EUROPA_FACE_FLUX_PROOF.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Europa_face_flux_proof_20261024/face_flux_proof.json"
+    ]
+  },
+  {
+    "number": 10,
+    "title": "Dilation changes porosity within wet material",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/EUROPA_DILATION_EVIDENCE.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Europa_dilation_evidence_20261024/dilation_evidence.json",
+      "https://aspect-documentation.readthedocs.io/en/stable/user/methods/melt-transport.html"
+    ]
+  },
+  {
+    "number": 11,
+    "title": "Changing kc at the same melt shape",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WATER_PERMEABILITY_MECHANISM.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/centered_water_permeability_proof_20261024_215923/permeability_proof.json"
+    ]
+  },
+  {
+    "number": 12,
+    "title": "Flat layer and centered water body",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/FLAT_AND_CENTERED_WATER_VIDEOS.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/flat_and_centered_S3_videos_20261024_221928/video_comparison.json"
+    ]
+  },
+  {
+    "number": 13,
+    "title": "Geometry comparison movies",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/flat_and_centered_S3_videos_20261024_221928/video_comparison.json",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/flat_and_centered_S3_videos_20261024_221928/video_verification.json"
+    ]
+  },
+  {
+    "number": 14,
+    "title": "Warm and cold centered-body initial states",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_COLD_BOTTOM_S3.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_COLD_BOTTOM_S3.diff",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/centered_cold_bottom_S3_100yr_20261025_073337/initial_verification.json"
+    ]
+  },
+  {
+    "number": 15,
+    "title": "Cold ice slows descent and retains less liquid",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WARM_COLD_CONDUCTION.md",
+      "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\centered_warm_cold_conduction_100yr_20261025_095449/comparison.json"
+    ]
+  },
+  {
+    "number": 16,
+    "title": "Profiles through the center at 100 years",
+    "sources": [
+      "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\centered_warm_cold_conduction_100yr_20261025_095449/center_profiles_100yr.csv",
+      "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\centered_warm_cold_conduction_100yr_20261025_095449/comparison.json"
+    ]
+  },
+  {
+    "number": 17,
+    "title": "Warm and cold centered-body movies",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/centered_water_S3_100yr_20261024_214605/summary.json",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/centered_cold_bottom_S3_100yr_20261025_073337/summary.json",
+      "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\research_presentation_20261025/videos/warm_frame_manifest.csv",
+      "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\research_presentation_20261025/videos/cold_frame_manifest.csv"
+    ]
+  },
+  {
+    "number": 18,
+    "title": "Conduction redistributes heat locally",
+    "sources": [
+      "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\centered_warm_cold_conduction_100yr_20261025_095449/comparison.json",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/centered_cold_bottom_heat_budget.m"
+    ]
+  },
+  {
+    "number": 19,
+    "title": "The first cold cell becomes wet through transport",
+    "sources": [
+      "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\centered_warm_cold_conduction_100yr_20261025_095449/comparison.json",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/enthMelt.m",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/centered_cold_bottom_heat_budget.m"
+    ]
+  },
+  {
+    "number": 20,
+    "title": "What the tests support about migration",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/EUROPA_MIGRATION_SIMPLE_EXPLANATION.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WATER_PERMEABILITY_MECHANISM.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WARM_COLD_CONDUCTION.md"
+    ]
+  },
+  {
+    "number": 21,
+    "title": "Numerical spreading at a dry front",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/EUROPA_REGULARIZATION_AUDIT.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Europa_regularization_audit_20261024/regularization_audit.json"
+    ]
+  },
+  {
+    "number": 22,
+    "title": "Constitutive and thermal limits",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WARM_COLD_CONDUCTION.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/darcy_stokes_2D_centered_cold_bottom_S3.m",
+      "https://iapws.org/technical-guidance/release/LiquidWater"
+    ]
+  },
+  {
+    "number": 23,
+    "title": "Appendix: the earlier pressure-reference mismatch",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_BLOB_CONTINUATION_AUDIT.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/centered_blob_continuation_20261024_210127/analysis/forcing_control/forcing_control.json"
+    ]
+  },
+  {
+    "number": 24,
+    "title": "Appendix: boundary closure checks",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/closed_lid_1000_steps/closed_lid_summary.csv",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/no_flow_base_1000_steps/no_flow_base_summary.csv"
+    ]
+  },
+  {
+    "number": 25,
+    "title": "Appendix: reproducibility and regularization",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/EUROPA_REPRODUCIBILITY.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/centered_water_S3_verification_20261024_213417/verification.json",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/EUROPA_REGULARIZATION_AUDIT.md"
+    ]
+  },
+  {
+    "number": 26,
+    "title": "Appendix: short and interrupted tests",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/Output/Europa_kc_1.850e-16_10000yr_20261023_193721/STOPPED_BY_USER.txt",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WATER_S3_SETUP.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_BLOB_CONTINUATION_AUDIT.md",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/S3_CASE_SWITCH_README.md"
+    ]
+  },
+  {
+    "number": 27,
+    "title": "Files for continuing the analysis",
+    "sources": [
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/run_darcy_stokes_case.m",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/run_Europa_until_depleted.m",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/run_centered_water_S3.m",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/model_and_dependencies/run_centered_water_cold_bottom_S3.m",
+      "C:/Users/lenovo/Desktop/Research/Impact-melt-migration/docs/CENTERED_WARM_COLD_CONDUCTION.md",
+      "C:\\Users\\lenovo\\Desktop\\Research\\Impact-melt-migration\\Output\\centered_warm_cold_conduction_100yr_20261025_095449/comparison.json"
+    ]
+  }
+]

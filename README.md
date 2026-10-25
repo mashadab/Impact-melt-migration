@@ -63,6 +63,11 @@ z = 0 falls to 0.5% of its initial volume, subject to a safety step limit.
 See [the case setup](model_and_dependencies/S3_CASE_SWITCH_README.md),
 [melt budget definitions](model_and_dependencies/EUROPA_MELT_BUDGET.md), and
 [research output schedule](model_and_dependencies/EUROPA_RESEARCH_OUTPUTS.md).
+For a separate research run from a frozen, commit-labelled source tree, use
+`./scripts/launch_Europa_S3_research.ps1` on Windows. The
+[launch guide](docs/EUROPA_S3_RESEARCH_LAUNCH.md) records the exact configuration.
+The default remains the corrected shared `impact_melt_europa` switch with
+`kc = 1.85e-8 m^2`.
 The [independent 100-step comparison](docs/EUROPA_REPRODUCIBILITY.md) records
 exact agreement with the long run over that interval. Generated results,
 videos, temporary files, and autosaves remain local. Required wave CSV inputs

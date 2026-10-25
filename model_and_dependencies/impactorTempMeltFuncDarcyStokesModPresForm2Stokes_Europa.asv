@@ -148,7 +148,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
     
     % combine ice shell and ocean to get the entire domain fields
     TGr = [TOc; TGr]; %Temperature, K
-
+    
     phiGr = [phiOc; phiGr]; %Porosity or melt fraction
     phiGr(Y<0.25) = 0;  %%%%new line
     T = TGr(:); %Making Temperature array from grid, N by 1
@@ -358,7 +358,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         vfmax= max(abs(vf)); %largest solid velocity        
         
 
-        overpressure = GG * spdiags((1./(phi+1e-5).^mm) .* ViscTempPhi(Tplot(:),phi),0,Grid.p.N,Grid.p.N) * (Dp * vm) *eta_0*D_T/d^2 ; %redimensionalizing overpressure [Pa] G * mu./ phi.^m .* (Dp * v);      %Solid pressure
+        overpressure = GG * spdiags((1./(phi+1e-15).^mm) .* ViscTempPhi(Tplot(:),phi),0,Grid.p.N,Grid.p.N) * (Dp * vm) *eta_0*D_T/d^2 ; %redimensionalizing overpressure [Pa] G * mu./ phi.^m .* (Dp * v);      %Solid pressure
         %   GG * (1-phi)./(phi+1e-15).^mm * Dp * vm
 
         % Adaptive time stepping based on competition b/w CFL and Neumann
@@ -384,8 +384,8 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         phi_face_vec = comp_mean(phiPlot,1,1,Grid.p)*ones(Grid.p.Nf,1);
         v_tot = vm.*(1-phi_face_vec) + vf.*phi_face_vec;  %%%% This is where we need to add more variation in velocity        
         AHnew2 = build_adv_op(v_tot,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
-        norm(AH - AHnew2)
-        AH = AHnew2;
+        %norm(AH - AHnew2)
+        %AH = AHnew2;
 
         %AHnew2 = build_adv_op(vm,((1-phi).*(T-1) + phi*Pi_6),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1) + phi*Pi_6);
         %AHnew3 = (build_adv_op(vm,(1-phi).*(T-1),dt,Gp,Grid.p,Param.H,'mc')*((1-phi).*(T-1))+build_adv_op(vm,phi*Pi_6,dt,Gp,Grid.p,Param.H,'mc')*(phi*Pi_6))
@@ -455,7 +455,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 
         
         % condition for ending simulation
-        if phiFracRem(end) < termFrac || (i > 10000 && phiFracRem(end) > phiFracRem(end-1)) || i>3940%i >100000 %1500 to 5000
+        if phiFracRem(end) < termFrac || (i > 10000 && phiFracRem(end) > phiFracRem(end-1)) || i>10000%i >100000 %1500 to 5000
             %  point
             save(['' fn '_eta0_' num2str(log10(eta_0)) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'kc' num2str(kc) 'C.mat'],...
                 'Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
@@ -464,7 +464,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
         end
     
         %% PLOTTING
-         if mod(i,20) == 0  || i==1
+         if mod(i,100) == 0  || i==1
             greens = interp1([0;1],[1 1 1; 0.45, 0.65, 0.38],linspace(0,1,256));
             reds = interp1([0;1],[1 1 1;  190/255  30/255  45/255],linspace(0,1,256));
             blues = interp1([0;1],[1 1 1; 39/255  170/255  225/255],linspace(0,1,256));
@@ -532,7 +532,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 
 
                        %streamfunction plot
-            h=figure('Visible', 'on'); %For visibility: h=figure(4);
+            h=figure('Visible', 'off'); %For visibility: h=figure(4);
             set(gcf,'units','points','position',[0,0,3125,1250])
             % Enlarge figure to full screen.
             [PSI,psi_min,psi_max] = comp_streamfun(vm,Grid.p);
@@ -711,13 +711,13 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 %             clim([0 10])
             
             if rem(i,100)==0 || i==1
-                            save(['../Output/Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
+                            save(['../Output/diff_vel_Europa' fn '_eta0_' num2str(log10(eta_0)) 'kc' num2str(kc) '_Ea_' num2str(E_a/1e3) '_output_' num2str(i) 'C.mat'],...
                 'overpressure','p','Exx','Eyy','Exy','Tplot','phi','Grid','phiDrain1Vec','phiDrain2Vec','phiOrig','tVec',...
                 'phiFracRem','T','phi','tVec','phiDrain1Vec','phiDrain2Vec','phiOrig','trc1','trc2')
             end
 
             %if i<1500
-            saveas(h,sprintf('../figures/Europa_res_fig%dkc%d.png',i, kc));          
+            saveas(h,sprintf('../figures/diff_vel_Europa_res_fig%dkc%d.png',i, kc));          
             %end
    
             
@@ -730,7 +730,7 @@ function impactorTempMeltFuncDarcyStokesModPresForm2Stokes_Europa(fn,eta_0,E_a,k
 %%%%
 %% Making a video out of frames
  % create the video writer with fps of the original video
- Data_result= sprintf('../figures/Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));
+ Data_result= sprintf('../figures/diff_vel_Europa_kc_%s_t%syrs.avi',num2str(kc),num2str(tTot));
  writerObj = VideoWriter(Data_result);
  writerObj.FrameRate = 5; % set the seconds per image
  open(writerObj); % open the video writer

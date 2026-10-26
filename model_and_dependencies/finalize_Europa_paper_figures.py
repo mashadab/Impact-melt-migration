@@ -104,6 +104,7 @@ and editable MATLAB FIG versions are alongside it. Times New Roman is used.
 04 Figure 6: original paper time requests, showing the first actual checkpoint
    at/after each request. Actual times, not requested times, are printed.
 05 Figure 7: shell melt volume and penetration depth on twin coloured axes.
+   Display windows: (a) 0-1500 years; (c) 0-500 years. Data are retained intact.
 06 Figure S4: the same available histories on semilog time axes.
 07 Completed reference histories: includes the earlier completed high-kc run,
    rather than substituting its uncomputed future into the ongoing fresh run.

@@ -9,6 +9,7 @@ if nargin<3,mode='all';end
 files=dir(fullfile(output_dir,'0*.fig'));
 if strcmp(mode,'field_only'),files=files(startsWith({files.name},'03_') | startsWith({files.name},'04_'));end
 if strcmp(mode,'log_only'),files=files(startsWith({files.name},'06_') | startsWith({files.name},'07_'));end
+if strcmp(mode,'linear_only'),files=files(startsWith({files.name},'05_'));end
 for k=1:numel(files)
  stem=files(k).name(1:end-4);f=openfig(fullfile(files(k).folder,files(k).name),'invisible');
  if startsWith(stem,'01_')
@@ -44,6 +45,12 @@ for k=1:numel(files)
  elseif startsWith(stem,'05_') || startsWith(stem,'06_') || startsWith(stem,'07_')
   axes_list=findall(f,'Type','axes');
   for ax=axes_list'
+   if startsWith(stem,'05_')
+    if ax.Position(1)<.5,limits=[0 1500];ticks=0:500:1500;else,limits=[0 500];ticks=0:100:500;end
+    ax.XLim=limits;
+    if strcmp(ax.YAxisLocation,'left'),ax.XTick=ticks;ax.XAxis.Exponent=0;end
+    assert(isequal(ax.XLim,limits),'Linear panel axis limit mismatch.');
+   end
    if strcmp(ax.XScale,'log') && strcmp(ax.YAxisLocation,'left')
     limits=ax.XLim;powers=unique([ceil(log10(limits(1))):2:floor(log10(limits(2))) floor(log10(limits(2)))]);
     ax.XTick=10.^powers;
@@ -53,7 +60,13 @@ for k=1:numel(files)
   for t=labels'
    if ischar(t.String) && startsWith(t.String,'Ongoing to ')
     t.Units='normalized';
-    if startsWith(stem,'05_'),t.Position=[.35 .90 0];else,t.Position=[.06 .70 0];end
+    if startsWith(stem,'05_'),t.String='Run ongoing';t.Position=[.35 .90 0];else,t.Position=[.06 .70 0];end
+   end
+  end
+  if startsWith(stem,'05_')
+   boxes=findall(f,'Type','textboxshape');
+   for t=boxes'
+    if t.Position(2)<.1,t.String='Display limits: (a) 0-1500 yr; (c) 0-500 yr. Markers are selected actual saved states. Red depth uses \phi \geq 0.001 and 100-m cell centres.';end
    end
   end
  end

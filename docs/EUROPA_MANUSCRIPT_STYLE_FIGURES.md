@@ -14,6 +14,10 @@ Europa kc=1.85e-10, and unavailable empirical scatter/error bars are omitted.
 Theoretical contours evaluate the paper's equations using the archived model
 constants; they are not additional simulations.
 
+The linear Figure 7 display windows are 0-1500 years for panel (a) and 0-500
+years for panel (c), applied to both overlaid axes. Complete histories remain
+in the saved data and the semilog figures.
+
 The main high-kc evolution uses the fresh ongoing run, frozen for the plots
 at step 30300 and 798.994530269574 years. The low-kc evolution uses its completed
 corrected run. Final-volume Figure 4 uses both completed research runs; the

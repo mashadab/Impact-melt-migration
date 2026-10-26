@@ -249,7 +249,10 @@ f=new_figure(1100,470);cases={low,[],high};blue=[.20 .37 .65];red=[.76 .16 .15];
 for panel=[1 3]
  c=cases{panel};b=c.budget;pos=[.08+(panel-1)*.305 .21 .205 .69];
  if is_log,xlimits=[.003 10^ceil(log10(b.time_years(end)))];keep=b.time_years>0;
- else,xlimits=[0 ceil(b.time_years(end)/10^floor(log10(b.time_years(end))))*10^floor(log10(b.time_years(end)))];keep=true(height(b),1);end
+ else
+  if panel==1,xlimits=[0 1500];else,xlimits=[0 500];end
+  keep=true(height(b),1);
+ end
  ax=axes(f,'Position',pos);hold(ax,'on');plot(ax,b.time_years(keep),b.melt_shell_m3(keep)/1e9,'Color',blue,'LineWidth',1.6);
  rows=c.selected.step+1;valid=b.time_years(rows)>0 | ~is_log;
  plot(ax,b.time_years(rows(valid)),b.melt_shell_m3(rows(valid))/1e9,'o','Color',blue,'MarkerFaceColor',blue,'MarkerSize',4);
@@ -257,6 +260,9 @@ for panel=[1 3]
  if is_log
   powers=unique([ceil(log10(xlimits(1))):2:floor(log10(xlimits(2))) floor(log10(xlimits(2)))]);
   set(ax,'XScale','log','XTick',10.^powers);
+ else
+  if panel==1,ticks=0:500:1500;else,ticks=0:100:500;end
+  set(ax,'XTick',ticks);ax.XAxis.Exponent=0;
  end
  xlabel(ax,'Time [years]');ylabel(ax,'Melt volume [km^3]');
  text(ax,.95,.98,sprintf('(%c)','a'+panel-1),'Units','normalized','HorizontalAlignment','right','VerticalAlignment','top','Color','k','FontSize',17);
@@ -268,12 +274,13 @@ for panel=[1 3]
  ylabel(dep,'Penetration depth [km]');
  if strcmp(c.status,'ongoing')
   labelpos=[.35 .90];if is_log,labelpos=[.06 .70];end
-  text(ax,labelpos(1),labelpos(2),sprintf('Ongoing to %.4g yr',b.time_years(end)),'Units','normalized','FontSize',9,'Color',[.25 .25 .25]);
+  if is_log,status_label=sprintf('Ongoing to %.4g yr',b.time_years(end));else,status_label='Run ongoing';end
+  text(ax,labelpos(1),labelpos(2),status_label,'Units','normalized','FontSize',9,'Color',[.25 .25 .25]);
  end
 end
 annotation(f,'textbox',[.405 .55 .18 .20],'String',{'(b)','k_0 = 1.85 \times 10^{-10} m^2','Not yet simulated'}, ...
  'HorizontalAlignment','center','EdgeColor','none','FontSize',12,'Color',[.45 .45 .45]);
-if is_log,note='Semilog time axis; t=0 omitted. ';else,note='Time limits follow the corrected data. ';end
+if is_log,note='Semilog time axis; t=0 omitted. ';else,note='Display limits: (a) 0-1500 yr; (c) 0-500 yr. ';end
 footnote(f,[note 'Markers are selected actual saved states. Red depth uses \phi \geq 0.001 and 100-m cell centres.']);
 finish(f,stem,out,build);
 end

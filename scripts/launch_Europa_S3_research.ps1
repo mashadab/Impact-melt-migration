@@ -2,7 +2,8 @@ param(
     [ValidateScript({ $_ -gt 0 -and -not [double]::IsInfinity($_) -and -not [double]::IsNaN($_) })]
     [double]$Kc = 1.85e-8,
     [string]$MatlabPath = 'C:/Program Files/MATLAB/R2022b/bin/matlab.exe',
-    [string]$OutputDirectory = ''
+    [string]$OutputDirectory = '',
+    [switch]$PrepareOnly
 )
 # Launch the corrected impact_melt_europa switch from a frozen source tree.
 $ErrorActionPreference = 'Stop'
@@ -87,6 +88,10 @@ $launchFile = Join-Path $OutputDirectory 'start_Europa_S3.m'
 Set-Content -LiteralPath $launchFile -Value $launchCode -Encoding utf8
 $matlabLaunch = ConvertTo-MatlabLiteral $launchFile
 $arguments = '-batch "run(''' + $matlabLaunch + ''')"'
+if ($PrepareOnly) {
+    [ordered]@{ output_dir=$OutputDirectory; git_commit=$commit.Trim(); kc_m2=$Kc; case_key='impact_melt_europa'; launch_file=$launchFile; status='queued' } | ConvertTo-Json -Compress
+    return
+}
 $process = Start-Process -FilePath $MatlabPath -ArgumentList $arguments -WorkingDirectory $repoRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $OutputDirectory 'matlab_stdout.log') -RedirectStandardError (Join-Path $OutputDirectory 'matlab_stderr.log')
 $launch = [ordered]@{ process_id=$process.Id; output_dir=$OutputDirectory; git_commit=$commit.Trim(); kc_m2=$Kc; case_key='impact_melt_europa' }
 $launch | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $OutputDirectory 'launch.json') -Encoding utf8

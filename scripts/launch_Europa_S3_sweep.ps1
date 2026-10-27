@@ -16,11 +16,13 @@ function Save-Queue($record,[string]$path) {
 if ($Worker) {
     $queueFile = Join-Path $SweepDirectory 'queue.json'
     $queue = Get-Content -LiteralPath $queueFile -Raw | ConvertFrom-Json
+    if ($queue.worker_pid -and $queue.worker_pid -ne $PID -and (Get-Process -Id $queue.worker_pid -ErrorAction SilentlyContinue)) { throw 'This queue already has a running worker.' }
     $queue.worker_pid = $PID
     $queue.status = 'running'
     Save-Queue $queue $queueFile
     try {
         foreach ($case in $queue.cases) {
+            if ($case.status -ne 'queued') { continue }
             $case.status = 'starting'
             $case.started_local = Get-Date -Format o
             Save-Queue $queue $queueFile
@@ -55,7 +57,9 @@ if ($Worker) {
             }
             Save-Queue $queue $queueFile
         }
-        $queue.status = if (@($queue.cases | Where-Object status -ne 'completed').Count) { 'finished_with_failures' } else { 'completed' }
+        $queue.status = if (@($queue.cases | Where-Object status -eq 'failed').Count) { 'finished_with_failures' }
+            elseif (@($queue.cases | Where-Object status -eq 'stopped_by_user').Count) { 'completed_with_user_stops' }
+            else { 'completed' }
         Save-Queue $queue $queueFile
     } catch {
         $queue.status = 'failed'

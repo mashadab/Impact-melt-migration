@@ -33,7 +33,7 @@ facts=struct('reference_pdf','Impact_melt_foundering (1).pdf','font','Times New 
  'main_high_cutoff_years',live.budget.time_years(end),'main_high_cutoff_step',height(live.budget)-1, ...
  'main_history_phi_threshold',.001,'seconds_per_year',3.154e7,'data_interpolation',false, ...
  'missing_cases',{{'corrected Titan evolution','Europa kc=1.85e-10','empirical permeability scatter/error bars'}}, ...
- 'field_display','Actual cell values; temperature and melt colormaps discretized for display; isotherm bands follow cell edges.', ...
+ 'field_display','Actual cell values; temperature and melt colormaps discretized for display; no temperature-band outlines.', ...
  'depth_definition','Surface minus deepest shell cell centre with phi>=0.001; deepest shell centre is z=0.05 km.', ...
  'source_plot_scripts',{{'Europa_video_creation.m','plot_Europa_saved_times.m','plot_Europa_permeability_comparison.m'}});
 fid=fopen(fullfile(output_dir,'plot_provenance.json'),'w');fprintf(fid,'%s',jsonencode(facts));fclose(fid);
@@ -226,9 +226,8 @@ for row=panels
   rgb=ind2rgb(1+floor(255*max(0,min(1,(T-100)/173))),bone_map);
   melt_rgb=ind2rgb(1+floor(255*max(0,min(1,P))),melt_map);
   wet=repmat(P>=1e-3,1,1,3);rgb(wet)=melt_rgb(wet);
-  imagesc(ax,r,z,rgb);
-  bands=floor(max(0,min(39,(T-100)/173*39)));
-  [xx,zz]=cell_band_edges(r,z,bands,P);plot(ax,xx,zz,'Color',[.72 .78 .79],'LineWidth',.16);
+  img=imagesc(ax,r,z,rgb);
+  if isprop(img,'Interpolation'),img.Interpolation='nearest';end
   set(ax,'YDir','normal','XLim',[0 10],'YLim',[0 10],'XTick',[],'YTick',[], ...
    'Box','on','LineWidth',.45,'Layer','top','FontName','Times New Roman','FontSize',11);
   if col==1
@@ -258,15 +257,6 @@ horizontal_scale(f,[.68 scale_y .25 .014],[100 273],bone(256),[100 150 200 250],
 note_y=.435;if ~isempty(middle),note_y=.018;end
 annotation(f,'textbox',[.08 note_y .87 .035],'String',note,'EdgeColor','none','Margin',0,'FontSize',8.5,'HorizontalAlignment','center');
 finish(f,stem,out,build);
-end
-
-function [xx,zz]=cell_band_edges(r,z,bands,phi)
-% Finite-volume cell edges: no spatial interpolation of temperature data.
-dr=median(diff(r));dz=median(diff(z));[iy,ix]=find(diff(bands,1,2)~=0 & phi(:,1:end-1)<1e-3 & phi(:,2:end)<1e-3);
-xe=(r(ix)+dr/2)';za=(z(iy)-dz/2)';zb=(z(iy)+dz/2)';
-xx=reshape([xe;xe;nan(size(xe))],1,[]);zz=reshape([za;zb;nan(size(za))],1,[]);
-[iy,ix]=find(diff(bands,1,1)~=0 & phi(1:end-1,:)<1e-3 & phi(2:end,:)<1e-3);ze=(z(iy)+dz/2)';xa=(r(ix)-dr/2)';xb=(r(ix)+dr/2)';
-xx=[xx reshape([xa;xb;nan(size(xa))],1,[])];zz=[zz reshape([ze;ze;nan(size(ze))],1,[])];
 end
 
 function history_figure(low,high,is_log,stem,out,build,middle)
@@ -345,6 +335,7 @@ for k=1:3
   'cutoff_years',c.budget.time_years(end));
 end
 facts=struct('font','Times New Roman','data_interpolation',false,'cases',{records}, ...
+ 'temperature_band_outlines',false,'graphics_smoothing',false, ...
  'linear_xlimits_years',[0 1500;0 5000;0 500],'depth_phi_threshold',.001, ...
  'depth_definition','Surface minus deepest shell cell centre with phi>=0.001.', ...
  'source_plot_scripts',{{'plot_Europa_paper_figures.m','Europa_video_creation.m'}}, ...

@@ -10,9 +10,24 @@ files=dir(fullfile(output_dir,'0*.fig'));
 if strcmp(mode,'field_only'),files=files(startsWith({files.name},'03_') | startsWith({files.name},'04_'));end
 if strcmp(mode,'log_only'),files=files(startsWith({files.name},'06_') | startsWith({files.name},'07_'));end
 if strcmp(mode,'linear_only'),files=files(startsWith({files.name},'05_'));end
+if strcmp(mode,'remove_outlines'),files=files(startsWith({files.name},'03_') | startsWith({files.name},'04_'));end
 for k=1:numel(files)
  stem=files(k).name(1:end-4);f=openfig(fullfile(files(k).folder,files(k).name),'invisible');
- if startsWith(stem,'01_')
+ if strcmp(mode,'remove_outlines')
+  images=findall(f,'Type','image');original=arrayfun(@(h) h.CData,images,'UniformOutput',false);
+  lines=findall(f,'Type','line','LineWidth',.16);removed=0;
+  for h=lines'
+   if isnumeric(h.Color) && isequal(h.Color,[.72 .78 .79]),delete(h);removed=removed+1;end
+  end
+  f.GraphicsSmoothing='off';
+  for j=1:numel(images)
+   if isprop(images(j),'Interpolation'),images(j).Interpolation='nearest';end
+   assert(isequal(images(j).CData,original{j}),'Image cell colours changed.');
+  end
+  report=struct('figure',stem,'removed_temperature_band_lines',removed, ...
+   'image_arrays_unchanged',true,'image_count',numel(images),'graphics_smoothing',false);
+  fid=fopen(fullfile(output_dir,'field_rendering_cleanup.json'),'w');fprintf(fid,'%s',jsonencode(report));fclose(fid);
+ elseif startsWith(stem,'01_')
   legends=findall(f,'Type','legend');
   for j=1:numel(legends)
    if numel(legends(j).String)>1,set(legends(j),'Box','on','Color','w','EdgeColor','none');end

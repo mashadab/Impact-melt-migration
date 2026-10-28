@@ -64,7 +64,7 @@ for path in pages:
     text = page.get_textpage().get_text_range()
     assert len(text) > 100 and 'stopped' in text.lower()
     png = OUT / (path.stem + '.png')
-    image = page.render(scale=2.5).to_pil().convert('RGB')
+    image = page.render(scale=2.5, no_smoothimage=True).to_pil().convert('RGB')
     assert np.mean(np.min(np.asarray(image), axis=2) < 230) > .008
     image.save(png)
     book.import_pages(document)
@@ -84,9 +84,16 @@ for i, report in enumerate(reports):
     draw.text((25, i * 660 + 617), report['figure'], font=font, fill='black')
 sheet.save(OUT / 'contact_sheet.png')
 
-for name in ['plot_Europa_paper_figures.m', 'finalize_Europa_three_case_figures.py']:
+for svg in OUT.glob('0*.svg'):
+    content = svg.read_text()
+    if '<image ' in content and 'image-rendering:pixelated' not in content:
+        svg.write_text(content.replace('<image ', '<image style="image-rendering:pixelated" '))
+
+for name in ['plot_Europa_paper_figures.m', 'polish_Europa_paper_figures.m',
+             'finalize_Europa_three_case_figures.py']:
     shutil.copy2(ROOT / 'model_and_dependencies' / name, OUT / name)
 verification = dict(passed=True, data_interpolation=False,
+                    image_smoothing=False, temperature_band_outlines=False,
                     cases=checks, figures=reports,
                     partial_endpoint_identified=True, simulation_source_modified=False,
                     pressure_accuracy_tested=False,
@@ -112,7 +119,7 @@ figures. The active kc=1.85e-14 case is not included in this comparison.
 
 No temporal or spatial interpolation of numerical fields. Scalar-history
 line segments connect actual recorded samples. Field colours show original
-cell values; temperature-band outlines follow cell edges. Selected field
+cell values, with image smoothing disabled and no added band outlines. Selected field
 arrays and exact timestamp/source selections are retained alongside the plots.
 Depth uses phi>=0.001 and 100-m vertical cell centres (maximum 9.95 km).
 Net delivery is downward minus upward transfer at z=0; net refreezing is

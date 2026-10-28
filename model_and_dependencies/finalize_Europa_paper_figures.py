@@ -122,7 +122,7 @@ source, boundaries, time stepping and field arrays are never changed.
 
 No temporal interpolation, field smoothing, synthetic simulation states or
 extrapolation. Image colours are display mappings of actual cell values;
-temperature-band outlines follow finite-volume cell edges. Theoretical
+field panels have no added temperature-band outlines. Theoretical
 Figure 5 evaluates continuous equations on an explicitly generated grid.
 Straight segments in time-history curves connect recorded diagnostic samples.
 Timestamp labels are rounded for display; the CSVs retain full precision.

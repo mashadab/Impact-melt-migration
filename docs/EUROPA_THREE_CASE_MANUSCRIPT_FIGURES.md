@@ -10,6 +10,11 @@ and a temperature/melt evolution strip. Panels (a), (b), (c) are low, middle,
 high kc. Linear time limits are 1500, 5000 and 500 years, respectively, so the
 previously requested limits for (a) and (c) remain in place. Times New Roman
 and original saved cell values are used. Markers match actual selected states.
+Field panels have no added temperature-band outlines. Image smoothing is
+disabled in the PNG renderer, and SVG images use pixelated rendering. The
+layout-only `polish_Europa_paper_figures(out,build,'remove_outlines')` mode
+removes the earlier outlines from saved figures and verifies unchanged image
+colour arrays before exporting them again.
 
 The middle case is explicitly user-stopped at step 33600 and
 54817.746120019896 years, with 0.628% initial shell melt remaining. Its input

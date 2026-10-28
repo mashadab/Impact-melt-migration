@@ -1,7 +1,14 @@
-function plot_Europa_paper_figures(output_dir,build_dir,live_dir,middle_dir)
+function helpers=plot_Europa_paper_figures(output_dir,build_dir,live_dir,middle_dir)
 % Manuscript figure style, corrected saved data, no interpolated field states.
 % Reuses conventions from Europa_video_creation, plot_Europa_saved_times and
 % plot_Europa_permeability_comparison. This postprocessor never advances flow.
+% H=plot_Europa_paper_figures('helpers') exposes these same saved-data helpers.
+if nargin==1 && strcmp(output_dir,'helpers')
+ helpers=struct('read_case',@read_case,'select_states',@select_states,'load_fields',@load_fields, ...
+  'field_strip',@field_strip,'history_figure',@history_figure,'new_figure',@new_figure, ...
+  'style',@style,'kc_label',@kc_label,'finish',@finish,'footnote',@footnote,'panel_letter',@panel_letter, ...
+  'horizontal_scale',@horizontal_scale);return;
+end
 root=fileparts(mfilename('fullpath'));repo=fileparts(root);
 if nargin<3,live_dir=strtrim(fileread(fullfile(repo,'tmp','Europa_S3_latest_run.txt')));end
 if nargin<2
@@ -293,6 +300,10 @@ for panel=panels
  if is_log,set(dep,'XScale','log');end
  plot(dep,b.time_years(keep),b.penetration_depth_km(keep),'--','Color',red,'LineWidth',1.5);
  plot(dep,b.time_years(rows(valid)),b.penetration_depth_km(rows(valid)),'o','Color',red,'MarkerFaceColor',red,'MarkerSize',4);
+ if strcmp(c.status,'stopped_by_user')
+  plot(ax,b.time_years(end),b.melt_shell_m3(end)/1e9,'s','Color',blue,'MarkerFaceColor','w','MarkerSize',6);
+  plot(dep,b.time_years(end),b.penetration_depth_km(end),'s','Color',red,'MarkerFaceColor','w','MarkerSize',6);
+ end
  ylabel(dep,'Penetration depth [km]');
  if ~isempty(middle) && panel~=3,ylabel(dep,'');end
  if strcmp(c.status,'ongoing')
@@ -307,8 +318,11 @@ annotation(f,'textbox',[.405 .55 .18 .20],'String',{'(b)','k_0 = 1.85 \times 10^
 if is_log,note='Semilog time axis; t=0 omitted. ';else,note='Display limits: (a) 0-1500 yr; (c) 0-500 yr. ';end
 footnote(f,[note 'Markers are selected actual saved states. Red depth uses \phi \geq 0.001 and 100-m cell centres.']);
 else
- note='';if is_log,note='Log time; t=0 omitted. ';end
- footnote(f,[note 'Panel (b): user-stopped at 54,818 yr (0.628% remaining). Symbols: saved states. Depth: \phi \geq 0.001.']);
+ note='';if is_log,note='Log time (t>0). ';end
+ if strcmp(middle.status,'stopped_by_user')
+  note=[note sprintf('Panel (b) stopped: %.0f yr, %.3f%% remaining. ',middle.budget.time_years(end),100*middle.summary.remaining_fraction)];
+ end
+ footnote(f,[note 'Open squares: partial endpoints. Depth: \phi \geq 0.001.']);
 end
 finish(f,stem,out,build);
 end

@@ -7,8 +7,11 @@ S4, all-case histories/evolution, endpoint inventories, measured milestone times
 initial/end fields, lower-layer inventory and original paper time requests.
 
 All five cases use kc=1.85 times 10 to powers -16, -14, -12, -10 and -8 m2.
-The e-10 and e-12 endpoints are user-stopped partial runs. No completed endpoint
-or 0.5% depletion time is invented for them. Markers and captions identify them.
+All five recorded endpoints are accepted as depletion complete by the user's
+2026-10-28 instruction. Labels and endpoint markers treat every case equally.
+The measured residuals, histories and original solver stop reasons are retained
+in the data archive. Completion times mean recorded accepted endpoints; they do
+not replace the separately stored actual 0.5% threshold-crossing times or NaNs.
 The original main grouping e-16/e-10/e-8 retains the user's 1500-yr and 500-yr
 linear windows for panels (a) and (c). Semilog/all-case pages retain full times.
 

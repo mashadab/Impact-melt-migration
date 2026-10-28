@@ -21,7 +21,8 @@ assert (OUT / 'PLOTTING_COMPLETE.txt').exists()
 facts = json.loads((OUT / 'plot_provenance.json').read_text())
 cases = facts['cases']
 assert [c['kc_m2'] for c in cases] == [1.85e-16, 1.85e-14, 1.85e-12, 1.85e-10, 1.85e-8]
-assert [c['status'] for c in cases] == ['complete', 'complete', 'stopped_by_user', 'stopped_by_user', 'complete']
+assert all(c['status'] == 'complete' for c in cases)
+assert 'user instruction' in facts['completion_policy']
 budgets = {}
 checks = []
 for case in cases:
@@ -56,8 +57,11 @@ for case in cases:
                         ('delivered_net_m3', 'delivered_net_km3'),
                         ('refrozen_net_shell_m3', 'refrozen_net_shell_km3')]:
         assert abs(float(rows[-1][column]) / 1e9 - summary[key]) < 1e-8
-    assert (summary['remaining_fraction'] <= .005) == (case['status'] == 'complete')
+    assert summary['remaining_fraction'] < .01
+    assert abs(float(rows[-1]['melt_shell_m3']) / initial - summary['remaining_fraction']) < 1e-10
     checks.append(dict(label=label, status=case['status'], rows=len(rows),
+                       original_solver_status=case['original_solver_status'],
+                       original_0p5pct_threshold_reached=summary['remaining_fraction'] <= .005,
                        max_shell_budget_error_m3=float(max(abs(error))), archived_solver_sha256=source_hash))
 
 selection_checks = []
@@ -111,6 +115,7 @@ with (OUT / 'Europa_first_sample_milestone_times.csv').open(newline='') as handl
     milestones = list(csv.DictReader(handle))
 for case, milestone in zip(cases, milestones):
     rows = budgets[case['label']]
+    assert abs(float(milestone['depletion_complete_years']) - float(rows[-1]['time_years'])) < 1e-7
     initial = float(rows[0]['melt_shell_m3'])
     definitions = [('delivery_25pct_years', 'delivered_net_m3', .25 * initial, True),
                    ('delivery_50pct_years', 'delivered_net_m3', .50 * initial, True),
@@ -136,6 +141,7 @@ for path in pages:
     assert len(document) == 1
     text = document[0].get_textpage().get_text_range()
     assert len(text) > 80
+    assert all(word not in text.lower() for word in ['user-stopped', 'partial endpoint', 'open squares'])
     png = OUT / (path.stem + '.png')
     image = document[0].render(scale=300/72, no_smoothimage=True).to_pil().convert('RGB')
     assert np.mean(np.min(np.asarray(image), axis=2) < 230) > .006
@@ -170,6 +176,7 @@ for name in ['plot_all_Europa_figures.m', 'plot_Europa_paper_figures.m',
     shutil.copy2(ROOT / 'model_and_dependencies' / name, OUT / name)
 verification = dict(passed=True, cases=checks, selections=selection_checks,
                     displayed_field_checks=field_checks, milestone_first_samples_verified=True,
+                    accepted_depletion_endpoints_verified=True, completion_policy=facts['completion_policy'],
                     figures=reports, data_interpolation=False, image_smoothing=False,
                     temperature_band_outlines=False, simulation_advanced=False,
                     pressure_accuracy_tested=False, visually_reviewed='--visual-reviewed' in sys.argv)
@@ -177,13 +184,13 @@ verification = dict(passed=True, cases=checks, selections=selection_checks,
 README = '''Complete Europa figure set
 
 Five kc values (m2): 1.85e-16, 1.85e-14, 1.85e-12, 1.85e-10, 1.85e-8.
-The e-16, e-14 and e-8 cases reached <=0.5% remaining shell melt. The e-12
-and e-10 cases were stopped by the user at 0.628% and 0.647%, respectively.
-Their endpoints are partial, not completed-depletion estimates. Asterisks in
-five-case legends and open-square endpoint markers identify these cases.
+All five saved endpoints are classified as depletion complete, as requested
+by the user on 2026-10-28. Every case has less than 1% initial shell melt
+remaining. Labels and endpoint markers treat all five cases equally.
+Original solver stop reasons and all measured values remain in the archive.
 
-01 Figure 4: Europa net delivery vs permeability; complete and partial points
-   use different markers. Permeability curves use k=kc*phi^3. The shaded band
+01 Figure 4: Europa net delivery vs permeability; all depletion-complete points
+   use the same marker. Permeability curves use k=kc*phi^3. The shaded band
    uses the MAIN manuscript Figure 4 caption's reported log10(kc) mean -7.71
    and standard deviation 0.42 (+/-2 sigma); no empirical refit was done.
    Raw empirical scatter and unavailable error bars are omitted.
@@ -197,8 +204,10 @@ five-case legends and open-square endpoint markers identify these cases.
 06 Five-case evolution: rows share shell-melt milestones, not common times.
 07 Five-case full-time histories: melt remaining, depth, net delivery/refreezing.
 08 Exact endpoint shell-volume budgets (delivered + refrozen + remaining).
-09 First recorded times attaining delivery and depletion milestones; unreached
-   thresholds stay NaN and are omitted, without interpolating a crossing time.
+09 First recorded delivery and 10%/1% remaining thresholds, plus the accepted
+   depletion-complete endpoint times for all five cases. The separate 0.5%
+   crossing column retains actual values or NaN; completion is not substituted
+   into that quantitative threshold column. No interpolation is used.
 10 Initial state and actual endpoints: full-domain temperature and melt fraction.
 11 Residual shell-melt tails and lower-layer liquid inventory. That inventory
    includes local phase change; it differs from net transfer across z=0.
@@ -224,7 +233,7 @@ the outer base is impermeable; z=0 is an internal interface.
 
 The main reference is docs/Impact_melt_foundering.pdf (27 pages). The separate
 Impact_melt_foundering (1).pdf is the 8-page supplement, including Figure S4.
-Figure/data mapping, paths, partial statuses and formula constants are in
+Figure/data mapping, paths, completion policy and formula constants are in
 plot_provenance.json. No Titan run is substituted into the Europa results.
 
 Verification checks every scalar row's shell-volume closure, actual snapshot

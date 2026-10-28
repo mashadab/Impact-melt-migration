@@ -321,8 +321,11 @@ else
  note='';if is_log,note='Log time (t>0). ';end
  if strcmp(middle.status,'stopped_by_user')
   note=[note sprintf('Panel (b) stopped: %.0f yr, %.3f%% remaining. ',middle.budget.time_years(end),100*middle.summary.remaining_fraction)];
+  note=[note 'Open squares: partial endpoints. '];
+ elseif all(cellfun(@(c)strcmp(c.status,'complete'),cases))
+  note=[note 'All cases: depletion complete. '];
  end
- footnote(f,[note 'Open squares: partial endpoints. Depth: \phi \geq 0.001.']);
+ footnote(f,[note 'Depth: \phi \geq 0.001.']);
 end
 finish(f,stem,out,build);
 end

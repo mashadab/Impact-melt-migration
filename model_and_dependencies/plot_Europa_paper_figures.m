@@ -1,4 +1,4 @@
-function plot_Europa_paper_figures(output_dir,build_dir,live_dir)
+function plot_Europa_paper_figures(output_dir,build_dir,live_dir,middle_dir)
 % Manuscript figure style, corrected saved data, no interpolated field states.
 % Reuses conventions from Europa_video_creation, plot_Europa_saved_times and
 % plot_Europa_permeability_comparison. This postprocessor never advances flow.
@@ -14,6 +14,9 @@ set(groot,'defaultAxesFontName','Times New Roman','defaultTextFontName','Times N
  'defaultAxesFontSize',13,'defaultTextFontSize',13,'defaultTextInterpreter','tex', ...
  'defaultAxesTickLabelInterpreter','tex','defaultLegendInterpreter','tex', ...
  'defaultFigureVisible','off');
+if nargin>=4 && ~isempty(middle_dir)
+ three_case_figures(output_dir,build_dir,live_dir,middle_dir,repo);return;
+end
 low=read_case(fullfile(repo,'Output','Europa_kc_1.850e-16_until_depleted_20261024_085440'),'low',build_dir,false);
 high=read_case(fullfile(repo,'Output','Europa_kc_1.850e-08_until_depleted_20261023_195524'),'completed_high',build_dir,false);
 live=read_case(live_dir,'current_high',build_dir,true);
@@ -127,9 +130,14 @@ end
 
 function c=read_case(folder,label,build,is_live)
 target=fullfile(build,'inputs',label);if ~isfolder(target),mkdir(target);end
+budget_file=fullfile(folder,'melt_budget.csv');
+if isfile(fullfile(folder,'STOPPED_BY_USER.json'))
+ stopped=jsondecode(fileread(fullfile(folder,'STOPPED_BY_USER.json')));
+ budget_file=stopped.matched_budget;copyfile(fullfile(folder,'STOPPED_BY_USER.json'),target);
+end
 for attempt=1:10
  try
-  info1=dir(fullfile(folder,'melt_budget.csv'));raw=fileread(fullfile(folder,'melt_budget.csv'));info2=dir(fullfile(folder,'melt_budget.csv'));
+  info1=dir(budget_file);raw=fileread(budget_file);info2=dir(budget_file);
   assert(info1.bytes==info2.bytes && info1.datenum==info2.datenum && any(raw(end)==[10 13]));
   fid=fopen(fullfile(target,'melt_budget.csv'),'w');fprintf(fid,'%s',raw);fclose(fid);
   budget=readtable(fullfile(target,'melt_budget.csv'));assert(budget.time_years(1)==0 && all(diff(budget.time_years)>0));break;
@@ -142,6 +150,11 @@ config=jsondecode(fileread(fullfile(folder,'run_configuration.json')));c.kc=conf
 copyfile(fullfile(folder,'run_configuration.json'),target);
 if isfile(fullfile(folder,'summary.json')),c.summary=jsondecode(fileread(fullfile(folder,'summary.json')));else,c.summary=[];end
 if is_live && ~isfile(fullfile(folder,'COMPLETE.txt')),c.status='ongoing';end
+if isfile(fullfile(folder,'STOPPED_BY_USER.json'))
+ c.status='stopped_by_user';
+ assert(height(budget)==c.summary.steps+1 && abs(budget.time_years(end)-c.summary.time_years)<1e-7);
+end
+if ~isempty(c.summary),copyfile(fullfile(folder,'summary.json'),target);end
 steps=[];times=[];paths={};kinds={};
 if is_live && isfile(fullfile(folder,'paper_outputs','field_manifest.json'))
  m=jsondecode(fileread(fullfile(folder,'paper_outputs','field_manifest.json')));
@@ -193,13 +206,15 @@ assert(s.step==row.step && abs(s.time_years-row.time_years)<1e-7);
 assert(all(isfinite(s.phi)) && all(isfinite(s.temperature_K)));
 end
 
-function field_strip(low,high,stem,out,build,note)
+function field_strip(low,high,stem,out,build,note,middle)
+if nargin<7,middle=[];end
 f=new_figure(1420,700);rowy=[.71 .445 .18];width=.086;height=.176;left=.075;
 cache=fullfile(out,'selected_fields');if ~isfolder(cache),mkdir(cache);end
 annotation(f,'textbox',[.43 .95 .12 .04],'String','t [year]','EdgeColor','none','FontSize',17);
 annotation(f,'arrow',[.55 .83],[.968 .968],'LineWidth',1.4);
-for row=[1 3]
- if row==1,c=low;else,c=high;end
+cases={low,middle,high};panels=find(~cellfun(@isempty,cases));
+for row=panels
+ c=cases{row};
  for col=1:10
   s=load_fields(c.selected(col,:));r=s.radius_km(:);z=s.elevation_km(:);
   cachefile=fullfile(cache,sprintf('%s_step_%08d.mat',c.label,s.step));
@@ -224,14 +239,24 @@ for row=[1 3]
  end
  annotation(f,'textbox',[.012 rowy(row)+height-.005 .055 .05],'String',sprintf('(%c)','a'+row-1), ...
   'EdgeColor','none','FontSize',21,'FitBoxToText','on');
+ if ~isempty(middle)
+  caption=kc_label(c);
+  if strcmp(c.status,'stopped_by_user'),caption=[caption '  |  user-stopped'];end
+  annotation(f,'textbox',[left rowy(row)+height+.035 .64 .025],'String',caption, ...
+   'EdgeColor','none','Margin',0,'FontSize',11);
+ end
 end
+if isempty(middle)
 annotation(f,'textbox',[.012 rowy(2)+height-.005 .055 .05],'String','(b)','EdgeColor','none','FontSize',21);
 annotation(f,'textbox',[.30 rowy(2)+.07 .52 .06], ...
  'String','k_0 = 1.85 \times 10^{-10} m^2: corrected simulation not yet available', ...
  'EdgeColor','none','HorizontalAlignment','center','FontSize',14,'Color',[.45 .45 .45]);
-horizontal_scale(f,[.30 .115 .27 .014],[0 1],flipud(parula(256)),0:.2:1,'Melt fraction');
-horizontal_scale(f,[.68 .115 .25 .014],[100 273],bone(256),[100 150 200 250],'Temperature, K');
-annotation(f,'textbox',[.15 .435 .75 .028],'String',note,'EdgeColor','none','Margin',0,'FontSize',8.5,'HorizontalAlignment','center');
+end
+scale_y=.115;if ~isempty(middle),scale_y=.145;end
+horizontal_scale(f,[.30 scale_y .27 .014],[0 1],flipud(parula(256)),0:.2:1,'Melt fraction');
+horizontal_scale(f,[.68 scale_y .25 .014],[100 273],bone(256),[100 150 200 250],'Temperature, K');
+note_y=.435;if ~isempty(middle),note_y=.018;end
+annotation(f,'textbox',[.08 note_y .87 .035],'String',note,'EdgeColor','none','Margin',0,'FontSize',8.5,'HorizontalAlignment','center');
 finish(f,stem,out,build);
 end
 
@@ -244,13 +269,15 @@ xx=reshape([xe;xe;nan(size(xe))],1,[]);zz=reshape([za;zb;nan(size(za))],1,[]);
 xx=[xx reshape([xa;xb;nan(size(xa))],1,[])];zz=[zz reshape([ze;ze;nan(size(ze))],1,[])];
 end
 
-function history_figure(low,high,is_log,stem,out,build)
-f=new_figure(1100,470);cases={low,[],high};blue=[.20 .37 .65];red=[.76 .16 .15];
-for panel=[1 3]
+function history_figure(low,high,is_log,stem,out,build,middle)
+if nargin<7,middle=[];end
+f=new_figure(1100,470);cases={low,middle,high};blue=[.20 .37 .65];red=[.76 .16 .15];
+panels=find(~cellfun(@isempty,cases));
+for panel=panels
  c=cases{panel};b=c.budget;pos=[.08+(panel-1)*.305 .21 .205 .69];
  if is_log,xlimits=[.003 10^ceil(log10(b.time_years(end)))];keep=b.time_years>0;
  else
-  if panel==1,xlimits=[0 1500];else,xlimits=[0 500];end
+  if panel==1,xlimits=[0 1500];elseif panel==2,xlimits=[0 5000];else,xlimits=[0 500];end
   keep=true(height(b),1);
  end
  ax=axes(f,'Position',pos);hold(ax,'on');plot(ax,b.time_years(keep),b.melt_shell_m3(keep)/1e9,'Color',blue,'LineWidth',1.6);
@@ -259,12 +286,17 @@ for panel=[1 3]
  set(ax,'XLim',xlimits,'YLim',[0 35],'YTick',0:5:35,'YColor',blue,'LineWidth',.7,'TickDir','in','Box','off');
  if is_log
   powers=unique([ceil(log10(xlimits(1))):2:floor(log10(xlimits(2))) floor(log10(xlimits(2)))]);
+  if ~isempty(middle),powers=ceil(log10(xlimits(1))):2:floor(log10(xlimits(2)));end
   set(ax,'XScale','log','XTick',10.^powers);
  else
-  if panel==1,ticks=0:500:1500;else,ticks=0:100:500;end
-  set(ax,'XTick',ticks);ax.XAxis.Exponent=0;
+  if panel==1,ticks=0:500:1500;elseif panel==2,ticks=0:2500:5000;else,ticks=0:100:500;end
+  set(ax,'XTick',ticks,'XTickLabelRotation',0);ax.XAxis.Exponent=0;
  end
  xlabel(ax,'Time [years]');ylabel(ax,'Melt volume [km^3]');
+ if ~isempty(middle)
+  title(ax,kc_label(c),'FontSize',11,'FontWeight','normal');
+  if panel~=1,ylabel(ax,'');end
+ end
  text(ax,.95,.98,sprintf('(%c)','a'+panel-1),'Units','normalized','HorizontalAlignment','right','VerticalAlignment','top','Color','k','FontSize',17);
  dep=axes(f,'Position',pos,'Color','none','YAxisLocation','right','YDir','reverse','XLim',xlimits, ...
   'YLim',[3 10],'YTick',3:10,'XTick',[],'YColor',red,'XColor','none','LineWidth',.7,'Box','off');hold(dep,'on');
@@ -272,17 +304,58 @@ for panel=[1 3]
  plot(dep,b.time_years(keep),b.penetration_depth_km(keep),'--','Color',red,'LineWidth',1.5);
  plot(dep,b.time_years(rows(valid)),b.penetration_depth_km(rows(valid)),'o','Color',red,'MarkerFaceColor',red,'MarkerSize',4);
  ylabel(dep,'Penetration depth [km]');
+ if ~isempty(middle) && panel~=3,ylabel(dep,'');end
  if strcmp(c.status,'ongoing')
   labelpos=[.35 .90];if is_log,labelpos=[.06 .70];end
   if is_log,status_label=sprintf('Ongoing to %.4g yr',b.time_years(end));else,status_label='Run ongoing';end
   text(ax,labelpos(1),labelpos(2),status_label,'Units','normalized','FontSize',9,'Color',[.25 .25 .25]);
  end
 end
+if isempty(middle)
 annotation(f,'textbox',[.405 .55 .18 .20],'String',{'(b)','k_0 = 1.85 \times 10^{-10} m^2','Not yet simulated'}, ...
  'HorizontalAlignment','center','EdgeColor','none','FontSize',12,'Color',[.45 .45 .45]);
 if is_log,note='Semilog time axis; t=0 omitted. ';else,note='Display limits: (a) 0-1500 yr; (c) 0-500 yr. ';end
 footnote(f,[note 'Markers are selected actual saved states. Red depth uses \phi \geq 0.001 and 100-m cell centres.']);
+else
+ note='';if is_log,note='Log time; t=0 omitted. ';end
+ footnote(f,[note 'Panel (b): user-stopped at 54,818 yr (0.628% remaining). Symbols: saved states. Depth: \phi \geq 0.001.']);
+end
 finish(f,stem,out,build);
+end
+function label=kc_label(c)
+label=['k_0 = 1.85 \times 10^{' num2str(round(log10(c.kc/1.85))) '} m^2'];
+end
+
+function three_case_figures(out,build,high_dir,middle_dir,repo)
+low=read_case(fullfile(repo,'Output','Europa_kc_1.850e-16_until_depleted_20261024_085440'),'low',build,false);
+middle=read_case(middle_dir,'middle',build,true);
+high=read_case(high_dir,'high',build,true);
+assert(low.kc==1.85e-16 && middle.kc==1.85e-12 && high.kc==1.85e-8);
+assert(strcmp(low.summary.status,'melt_depleted') && strcmp(high.summary.status,'melt_depleted'));
+assert(strcmp(middle.status,'stopped_by_user') && ~middle.summary.depletion_reached);
+low.requested=[0 100 300 500 650 1000 2000 5000 20000 low.budget.time_years(end)];
+middle.requested=[0 100 300 600 800 900 1000 2000 5000 middle.budget.time_years(end)];
+high.requested=[0 30 60 75 80 85 100 200 400 high.budget.time_years(end)];
+low=select_states(low);middle=select_states(middle);high=select_states(high);
+cases={low,middle,high};records=cell(1,3);
+for k=1:3
+ c=cases{k};writetable(c.selected,fullfile(out,[c.label '_selected_states.csv']));
+ records{k}=struct('label',c.label,'panel',char('a'+k-1),'directory',c.directory, ...
+  'kc_m2',c.kc,'status',c.status,'summary',c.summary,'cutoff_step',height(c.budget)-1, ...
+  'cutoff_years',c.budget.time_years(end));
+end
+facts=struct('font','Times New Roman','data_interpolation',false,'cases',{records}, ...
+ 'linear_xlimits_years',[0 1500;0 5000;0 500],'depth_phi_threshold',.001, ...
+ 'depth_definition','Surface minus deepest shell cell centre with phi>=0.001.', ...
+ 'source_plot_scripts',{{'plot_Europa_paper_figures.m','Europa_video_creation.m'}}, ...
+ 'partial_endpoint_note','The middle case is user-stopped; its endpoint is not a depletion-complete result.');
+fid=fopen(fullfile(out,'plot_provenance.json'),'w');fprintf(fid,'%s',jsonencode(facts));fclose(fid);
+history_figure(low,high,false,'01_manuscript_volume_and_penetration',out,build,middle);
+history_figure(low,high,true,'02_full_time_semilog_histories',out,build,middle);
+field_strip(low,high,'03_manuscript_temperature_and_melt',out,build, ...
+ 'Actual saved times; no interpolation. Panel (b) is user-stopped at 54,818 yr with 0.628% initial shell melt remaining.',middle);
+fid=fopen(fullfile(out,'PLOTTING_COMPLETE.txt'),'w');fprintf(fid,'Three-case figures created from saved data only.\n');fclose(fid);
+fprintf('THREE_CASE_FIGURES_COMPLETE %s\n',out);
 end
 function horizontal_scale(f,position,limits,map,ticks,label)
 ax=axes(f,'Position',position,'FontName','Times New Roman','FontSize',12);

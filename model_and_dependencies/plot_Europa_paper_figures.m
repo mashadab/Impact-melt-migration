@@ -262,7 +262,9 @@ scale_y=.115;if ~isempty(middle),scale_y=.145;end
 horizontal_scale(f,[.30 scale_y .27 .014],[0 1],flipud(parula(256)),0:.2:1,'Melt fraction');
 horizontal_scale(f,[.68 scale_y .25 .014],[100 273],bone(256),[100 150 200 250],'Temperature, K');
 note_y=.435;if ~isempty(middle),note_y=.018;end
-annotation(f,'textbox',[.08 note_y .87 .035],'String',note,'EdgeColor','none','Margin',0,'FontSize',8.5,'HorizontalAlignment','center');
+if ~isempty(note)
+ annotation(f,'textbox',[.08 note_y .87 .035],'String',note,'EdgeColor','none','Margin',0,'FontSize',8.5,'HorizontalAlignment','center');
+end
 finish(f,stem,out,build);
 end
 
@@ -312,6 +314,7 @@ for panel=panels
   text(ax,labelpos(1),labelpos(2),status_label,'Units','normalized','FontSize',9,'Color',[.25 .25 .25]);
  end
 end
+if ~isfield(low,'minimal_figure') || ~low.minimal_figure
 if isempty(middle)
 annotation(f,'textbox',[.405 .55 .18 .20],'String',{'(b)','k_0 = 1.85 \times 10^{-10} m^2','Not yet simulated'}, ...
  'HorizontalAlignment','center','EdgeColor','none','FontSize',12,'Color',[.45 .45 .45]);
@@ -326,6 +329,7 @@ else
   note=[note 'All cases: depletion complete. '];
  end
  footnote(f,[note 'Depth: \phi \geq 0.001.']);
+end
 end
 finish(f,stem,out,build);
 end

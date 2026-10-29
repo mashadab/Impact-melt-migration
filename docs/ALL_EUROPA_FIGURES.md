@@ -8,7 +8,8 @@ initial/end fields, lower-layer inventory and original paper time requests.
 
 All six cases use kc=1.85 times 10 to powers -16, -14, -12, -11, -10 and -8 m2.
 All recorded endpoints are accepted as depletion complete by the user's
-2026-10-28 and 2026-10-29 instructions. Labels and endpoint markers treat every case equally.
+2026-10-28 and 2026-10-29 instructions. This classification is retained in the
+accompanying data/provenance, with no completion-status text or markers on figures.
 The measured residuals, histories and original solver stop reasons are retained
 in the data archive. Completion times mean recorded accepted endpoints; they do
 not replace the separately stored actual 0.5% threshold-crossing times or NaNs.
@@ -45,4 +46,9 @@ checking all fifteen rendered pages. No simulation is advanced or modified.
 Times New Roman, actual saved cell colours, no contour outlines, no numerical
 field interpolation and no image smoothing are retained. The near overlap of
 the e-14 and e-16 trajectories is shown without artificial display offsets.
+The figures follow the paper's minimal style: panel letters, axes, parameter
+values, actual timestamps and essential legends. Explanatory footers, status
+labels, extra endpoint markers, bar-value callouts and the 0.5% reference line
+are removed. The endpoint-time series is labelled "End time". Detailed definitions
+and provenance remain in the README and data tables outside the figures.
 Pressure accuracy and physical convergence remain outside these plotting checks.

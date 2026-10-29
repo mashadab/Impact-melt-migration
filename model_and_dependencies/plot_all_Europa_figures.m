@@ -22,7 +22,7 @@ for k=1:n
  c=H.read_case(folders{k},labels{k},build_dir,k~=1);assert(c.kc==coefficients(k));
  % All saved endpoints are accepted as depletion complete by the user.
  % Preserve the original solver stop reason separately from this classification.
- c.original_solver_status=c.status;c.status='complete';
+ c.original_solver_status=c.status;c.status='complete';c.minimal_figure=true;
  b=c.budget;initial=b.melt_shell_m3(1);requested=zeros(1,10);
  fractions=[1 .985 .97 .9 .75 .5 .25 .1 .02];
  for j=2:9,idx=find(b.melt_shell_m3<=fractions(j)*initial,1);assert(~isempty(idx));requested(j)=b.time_years(idx);end
@@ -57,7 +57,6 @@ p1=plot(ax,coefficients,endpoint_table.delivered_net_km3,'^','LineStyle','none',
  'MarkerSize',9,'Color',[.15 .15 .15],'MarkerFaceColor',[.15 .15 .15]);
 set(ax,'XScale','log','XLim',[1e-16 3e-8],'YLim',[0 40],'XTick',10.^(-16:2:-8));H.style(ax);
 xlabel(ax,'Permeability coefficient k_0 [m^2]');ylabel(ax,'Net melt delivered [km^3]');H.panel_letter(ax,'(a)');
-legend(ax,p1,{'Depletion complete'},'Location','southwest','Box','off','FontSize',10);
 ax=axes(f,'Position',[.575 .20 .35 .70]);hold(ax,'on');phi=logspace(-3,0,301);
 % This band uses the manuscript's reported k0 fit, not a new empirical fit.
 lo=10^(-7.71-2*.42)*phi.^3;hi=10^(-7.71+2*.42)*phi.^3;
@@ -68,7 +67,6 @@ set(ax,'XScale','log','YScale','log','XLim',[1e-3 1],'YLim',[1e-22 1e-7], ...
  'XTick',[.001 .01 .1 1],'YTick',10.^(-22:3:-7));H.style(ax);
 xlabel(ax,'Melt fraction, \phi [-]');ylabel(ax,'Permeability k [m^2]');H.panel_letter(ax,'(b)');
 legend(ax,hh,ll,'Location','southeast','Box','on','Color','w','EdgeColor','none','FontSize',8.5);
-H.footnote(f,'Europa only. All cases: depletion complete. Shading: manuscript-reported k_0 fit (log mean -7.71, \pm2\sigma; \sigma=0.42). Raw empirical scatter omitted.');
 H.finish(f,'01_Figure4_Europa_delivery_and_permeability',output_dir,build_dir);
 
 % Figure 5c,d: analytic Europa timescales, with no contour-edge overlays.
@@ -89,7 +87,6 @@ ax=axes(f,'Position',[.59 .20 .29 .69]);imagesc(ax,ph,logkc,log10(infiltration))
 colormap(ax,parula(256));H.style(ax);xlabel(ax,'Melt fraction, \phi [-]');ylabel(ax,'Permeability coefficient k_0 [m^2]');H.panel_letter(ax,'(d)');
 cb=colorbar(ax);cb.Position=[.90 .20 .017 .69];cb.Ticks=-2:2:12;cb.TickLabels=arrayfun(@(v)sprintf('10^{%d}',v),cb.Ticks,'UniformOutput',false);
 cb.Label.String='Infiltration time [years]';set(ax,'Position',[.59 .20 .29 .69]);
-H.footnote(f,'Analytic model only: manuscript equations 9-11, evaluated on an explicit grid. A single isothermal-shell simulation marker is not assigned.');
 H.finish(f,'02_Figure5_Europa_theoretical_timescales',output_dir,build_dir);
 save(fullfile(output_dir,'Europa_theory_grid.mat'),'TC','V','foundering','ph','logkc','infiltration','theory');
 write_json(fullfile(output_dir,'Europa_theory_parameters.json'),theory);
@@ -104,7 +101,7 @@ for k=1:3
  main{k}.requested=requests{k};main{k}=H.select_states(main{k});file=['main_states_' main{k}.label '.csv'];
  writetable(main{k}.selected,fullfile(output_dir,file));selections{end+1}=struct('file',file,'label',main{k}.label,'purpose','main manuscript grouping');
 end
-note='Actual saved times; no interpolation. All cases: depletion complete.';
+note='';
 H.field_strip(main{1},main{3},'03_Figure6_Europa_evolution',output_dir,build_dir,note,main{2});
 H.history_figure(main{1},main{3},false,'04_Figure7_Europa_volume_and_depth',output_dir,build_dir,main{2});
 H.history_figure(main{1},main{3},true,'05_FigureS4_Europa_semilog',output_dir,build_dir,main{2});
@@ -118,21 +115,10 @@ f=H.new_figure(1120,500);ax=axes(f,'Position',[.085 .24 .86 .66]);hold(ax,'on');
 values=[endpoint_table.delivered_net_km3 endpoint_table.refrozen_net_shell_km3 endpoint_table.remaining_shell_km3];
 bars=bar(ax,1:n,values,'stacked','BarWidth',.64);palette=[.18 .37 .69;.85 .38 .10;.50 .55 .59];
 for j=1:3,bars(j).FaceColor=palette(j,:);bars(j).EdgeColor='none';end
-for k=1:n
- marker='^';face=[.15 .15 .15];
- plot(ax,k,33.3,marker,'MarkerSize',8,'MarkerFaceColor',face,'Color',[.15 .15 .15],'LineWidth',1.2,'HandleVisibility','off');
- text(ax,k,values(k,1)/2,sprintf('%.2f',values(k,1)),'Color','w','HorizontalAlignment','center','FontSize',11);
- if values(k,2)>=2
-  text(ax,k,values(k,1)+values(k,2)/2,sprintf('%.2f',values(k,2)),'Color','k','HorizontalAlignment','center','FontSize',10);
- else
-  text(ax,k,34.8,sprintf('%.2f refrozen',values(k,2)),'Color',palette(2,:),'HorizontalAlignment','center','FontSize',9);
- end
-end
 exponents=round(log10(coefficients/1.85));
-set(ax,'XLim',[.4 n+.6],'XTick',1:n,'XTickLabel',arrayfun(@(e)['1.85 \times 10^{' num2str(e) '}'],exponents,'UniformOutput',false),'YLim',[0 36]);
+set(ax,'XLim',[.4 n+.6],'XTick',1:n,'XTickLabel',arrayfun(@(e)['1.85 \times 10^{' num2str(e) '}'],exponents,'UniformOutput',false),'YLim',[0 35]);
 H.style(ax);xlabel(ax,'Permeability coefficient k_0 [m^2]');ylabel(ax,'Volume [km^3]');
 legend(ax,bars,{'Net delivered','Net refrozen in shell','Remaining in shell'},'Location','northoutside','Orientation','horizontal','Box','off');
-H.footnote(f,'Each stack sums to the same initialized shell melt. All cases: depletion complete.');
 H.finish(f,'08_Europa_endpoint_volume_budgets',output_dir,build_dir);
 
 % First actual timestep attaining diagnostic thresholds; no time interpolation.
@@ -157,11 +143,10 @@ for panel=1:2
  end
  set(ax,'XScale','log','YScale','log','XLim',[1e-16 3e-8],'XTick',10.^(-16:2:-8));H.style(ax);
  xlabel(ax,'Permeability coefficient k_0 [m^2]');ylabel(ax,'Time [years]');H.panel_letter(ax,sprintf('(%c)','a'+panel-1));
- if panel==1,ll={'25% delivered','50% delivered','75% delivered'};else,ll={'10% remaining','1% remaining','Depletion complete'};end
+ if panel==1,ll={'25% delivered','50% delivered','75% delivered'};else,ll={'10% remaining','1% remaining','End time'};end
  if panel==1,ylim(ax,[50 2000]);else,ylim(ax,[50 1e5]);end
  legend(ax,hh,ll,'Location','northoutside','Orientation','horizontal','Box','off','FontSize',9);
 end
-H.footnote(f,'Percentages refer to initial shell melt. Thresholds: first recorded steps. Depletion complete: accepted saved endpoints. No interpolation.');
 H.finish(f,'09_Europa_delivery_and_depletion_times',output_dir,build_dir);
 
 endpoint_fields(cases,H,'10_Europa_initial_and_endpoint_fields',output_dir,build_dir);
@@ -174,16 +159,13 @@ for panel=1:2
   b=cases{k}.budget;keep=b.time_years>0;
   if panel==1,y=b.melt_shell_m3/1e9;else,y=b.melt_ocean_region_m3/1e9;end
   hh(k)=plot(ax,b.time_years(keep),y(keep),'Color',colors(k,:),'LineStyle',styles{k},'LineWidth',1.4);
-  mark_endpoint(ax,b.time_years(end),y(end),cases{k},colors(k,:));
  end
  set(ax,'XScale','log','XLim',[.003 1e5]);H.style(ax);xlabel(ax,'Time [years]');
  if panel==1,set(ax,'YScale','log','YLim',[.1 35]);ylabel(ax,'Shell melt remaining [km^3]');
-  yline(ax,.005*cases{1}.budget.melt_shell_m3(1)/1e9,'k--','0.5% reference','LabelHorizontalAlignment','left','FontName','Times New Roman');
  else,ylabel(ax,'Liquid inventory below z=0 [km^3]');ylim(ax,[0 35]);end
  H.panel_letter(ax,sprintf('(%c)','a'+panel-1));
  if panel==1,legend(ax,hh,case_labels(cases,H),'Location','northwest','Box','on','Color','w','EdgeColor','none','FontSize',8.5);end
 end
-H.footnote(f,'The lower-layer inventory includes local phase change. It is distinct from net delivery across z=0. All cases: depletion complete.');
 H.finish(f,'11_Europa_residual_melt_and_lower_inventory',output_dir,build_dir);
 
 % Original manuscript requested timestamps, using only actual saved states.
@@ -193,17 +175,17 @@ for k=1:3
  paper{k}.requested=paper_requests{k};paper{k}=H.select_states(paper{k});file=['paper_times_' paper{k}.label '.csv'];
  writetable(paper{k}.selected,fullfile(output_dir,file));selections{end+1}=struct('file',file,'label',paper{k}.label,'purpose','original manuscript requested times');
 end
-H.field_strip(paper{1},paper{3},'12_Europa_original_requested_times',output_dir,build_dir, ...
- 'Original manuscript time requests; labels show the first actual saved time at or after each request. These corrected fields are not the old manuscript results.',paper{2});
+H.field_strip(paper{1},paper{3},'12_Europa_original_requested_times',output_dir,build_dir,'',paper{2});
 
 % Additional manuscript-layout comparison for the newly accepted e-11 endpoint.
 focus={main{1},cases{focus_index},main{3}};
-H.field_strip(focus{1},focus{3},'13_Europa_kc11_temperature_and_melt',output_dir,build_dir, ...
- 'Actual saved states; no interpolation. Comparison: e-16 / e-11 / e-8. All cases: depletion complete.',focus{2});
+H.field_strip(focus{1},focus{3},'13_Europa_kc11_temperature_and_melt',output_dir,build_dir,'',focus{2});
 H.history_figure(focus{1},focus{3},false,'14_Europa_kc11_volume_and_depth',output_dir,build_dir,focus{2});
 H.history_figure(focus{1},focus{3},true,'15_Europa_kc11_semilog',output_dir,build_dir,focus{2});
 
-facts=struct('font','Times New Roman','cases',{records},'selection_sets',{selections}, ...
+facts=struct('font','Times New Roman','figure_style','minimal manuscript style: axes, panel letters, parameter values and essential legends only', ...
+ 'figure_status_annotations',false,'figure_explanatory_footers',false, ...
+ 'cases',{records},'selection_sets',{selections}, ...
  'case_order','kc = 1.85e-16, 1.85e-14, 1.85e-12, 1.85e-11, 1.85e-10, 1.85e-8 m2', ...
  'reference_main_pdf',fullfile(repo,'docs','Impact_melt_foundering.pdf'), ...
  'reference_supplement_pdf',fullfile(repo,'docs','Impact_melt_foundering (1).pdf'), ...
@@ -243,9 +225,6 @@ for row=1:n
 end
 H.horizontal_scale(f,[.30 .11 .27 .012],[0 1],flipud(parula(256)),0:.2:1,'Melt fraction');
 H.horizontal_scale(f,[.68 .11 .25 .012],[100 273],bone(256),[100 150 200 250],'Temperature [K]');
-annotation(f,'textbox',[.07 .015 .87 .035],'String', ...
- 'Rows follow matched shell-melt stages, not equal times. Actual saved times are printed. No outlines or numerical-field interpolation.', ...
- 'EdgeColor','none','FontSize',9,'HorizontalAlignment','center');
 H.finish(f,stem,out,build);
 end
 
@@ -257,13 +236,11 @@ for panel=1:4
  for k=1:n
   b=cases{k}.budget;keep=b.time_years>0;y=b.(fields{panel});if panel~=2,y=y/1e9;end
   hh(k)=plot(ax,b.time_years(keep),y(keep),'Color',colors(k,:),'LineStyle',styles{k},'LineWidth',1.4);
-  mark_endpoint(ax,b.time_years(end),y(end),cases{k},colors(k,:));
  end
  set(ax,'XScale','log','XLim',[.003 1e5],'XTick',10.^(-2:2:4));H.style(ax);xlabel(ax,'Time [years]');ylabel(ax,ylabs{panel});H.panel_letter(ax,sprintf('(%c)','a'+panel-1));
  if panel==2,set(ax,'YDir','reverse','YLim',[3 10]);elseif panel==4,ylim(ax,[0 6]);else,ylim(ax,[0 35]);end
  if panel==1,legend(ax,hh,case_labels(cases,H),'Location','southwest','Box','off','FontSize',8);end
 end
-H.footnote(f,'All cases: depletion complete. The e-14 and e-16 trajectories nearly overlap; no display offsets are applied.');
 H.finish(f,stem,out,build);
 end
 
@@ -287,9 +264,6 @@ for col=1:ncols
 end
 H.horizontal_scale(f,[.30 .53 .36 .015],[100 273],bone(256),[100 150 200 250],'Temperature [K]');
 H.horizontal_scale(f,[.30 .13 .36 .015],[0 1],flipud(parula(256)),0:.2:1,'Melt fraction');
-annotation(f,'textbox',[.06 .008 .89 .035],'String', ...
- 'Full model domain, including the lower layer. Dashed line: z=0. All cases: depletion complete.', ...
- 'EdgeColor','none','HorizontalAlignment','center','FontSize',10);
 H.finish(f,stem,out,build);
 end
 
@@ -302,10 +276,6 @@ if ~isfolder(folder),mkdir(folder);end;file=fullfile(folder,sprintf('%s_step_%08
 end
 function labels=case_labels(cases,H)
 labels=cell(size(cases));for k=1:numel(cases),labels{k}=H.kc_label(cases{k});end
-end
-function mark_endpoint(ax,x,y,c,color)
-marker='o';face=color;assert(strcmp(c.status,'complete'));
-plot(ax,x,y,marker,'MarkerSize',5,'MarkerFaceColor',face,'Color',color,'HandleVisibility','off');
 end
 function write_json(path,data)
 fid=fopen(path,'w');fprintf(fid,'%s',jsonencode(data));fclose(fid);

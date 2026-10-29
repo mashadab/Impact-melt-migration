@@ -144,7 +144,9 @@ for path in pages:
     assert len(document) == 1
     text = document[0].get_textpage().get_text_range()
     assert len(text) > 80
-    assert all(word not in text.lower() for word in ['user-stopped', 'partial endpoint', 'open squares'])
+    assert all(word not in text.lower() for word in ['depletion', 'user-stopped', 'partial endpoint',
+                                                    'open squares', 'all cases:', 'no interpolation',
+                                                    'actual saved', 'reference', 'raw empirical'])
     png = OUT / (path.stem + '.png')
     image = document[0].render(scale=300/72, no_smoothimage=True).to_pil().convert('RGB')
     assert np.mean(np.min(np.asarray(image), axis=2) < 230) > .006
@@ -182,7 +184,8 @@ shutil.copy2(ROOT / 'scripts/preserve_stopped_Europa_kc11.py', OUT / 'preserve_s
 verification = dict(passed=True, cases=checks, selections=selection_checks,
                     displayed_field_checks=field_checks, milestone_first_samples_verified=True,
                     accepted_depletion_endpoints_verified=True, completion_policy=facts['completion_policy'],
-                    figures=reports, data_interpolation=False, image_smoothing=False,
+                    figures=reports, figure_style=facts['figure_style'], status_annotations=False,
+                    explanatory_footers=False, data_interpolation=False, image_smoothing=False,
                     temperature_band_outlines=False, simulation_advanced=False,
                     pressure_accuracy_tested=False, visually_reviewed='--visual-reviewed' in sys.argv)
 (OUT / 'verification.json').write_text(json.dumps(verification, indent=2))
@@ -193,9 +196,12 @@ All six saved endpoints are classified as depletion complete, as requested
 by the user on 2026-10-28 and 2026-10-29. Every case has less than 1% initial
 shell melt remaining. Labels and endpoint markers treat all six cases equally.
 Original solver stop reasons and all measured values remain in the archive.
+Figures use the main manuscript's minimal style: axes, panel letters, parameter
+values, time labels and essential legends only. Status text, endpoint-status
+markers, explanatory footers and the 0.5% reference line are omitted.
 
-01 Figure 4: Europa net delivery vs permeability; all depletion-complete points
-   use the same marker. Permeability curves use k=kc*phi^3. The shaded band
+01 Figure 4: Europa net delivery vs permeability; all endpoints use the same
+   marker, with no status legend. Permeability curves use k=kc*phi^3. The shaded band
    uses the MAIN manuscript Figure 4 caption's reported log10(kc) mean -7.71
    and standard deviation 0.42 (+/-2 sigma); no empirical refit was done.
    Raw empirical scatter and unavailable error bars are omitted.
@@ -210,7 +216,7 @@ Original solver stop reasons and all measured values remain in the archive.
 07 Six-case full-time histories: melt remaining, depth, net delivery/refreezing.
 08 Exact endpoint shell-volume budgets (delivered + refrozen + remaining).
 09 First recorded delivery and 10%/1% remaining thresholds, plus the accepted
-   depletion-complete endpoint times for all six cases. The separate 0.5%
+   endpoint times for all six cases, labelled "End time". The separate 0.5%
    crossing column retains actual values or NaN; completion is not substituted
    into that quantitative threshold column. No interpolation is used.
 10 Initial state and actual endpoints: full-domain temperature and melt fraction.

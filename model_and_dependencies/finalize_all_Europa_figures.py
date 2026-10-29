@@ -20,7 +20,7 @@ BUILD = Path(paths['build_dir'])
 assert (OUT / 'PLOTTING_COMPLETE.txt').exists()
 facts = json.loads((OUT / 'plot_provenance.json').read_text())
 cases = facts['cases']
-assert [c['kc_m2'] for c in cases] == [1.85e-16, 1.85e-14, 1.85e-12, 1.85e-10, 1.85e-8]
+assert [c['kc_m2'] for c in cases] == [1.85e-16, 1.85e-14, 1.85e-12, 1.85e-11, 1.85e-10, 1.85e-8]
 assert all(c['status'] == 'complete' for c in cases)
 assert 'user instruction' in facts['completion_policy']
 budgets = {}
@@ -31,12 +31,15 @@ for case in cases:
     shutil.copytree(BUILD / 'inputs' / label, folder, dirs_exist_ok=True)
     run = Path(case['directory'])
     for name in ['launch_provenance.json', 'startup_verification.json', 'launch_verification.json',
-                 'STOPPED_BY_USER.json', 'STOPPED_BY_USER.txt']:
+                 'STOPPED_BY_USER.json', 'STOPPED_BY_USER.txt', 'STOP_PROCESS_RECORD.json']:
         if (run / name).exists():
             shutil.copy2(run / name, folder / name)
     sources = [run / 'runtime/model_and_dependencies/darcy_stokes_2D_cases.m',
                run / 'source/darcy_stokes_2D_cases.m']
     source = next((p for p in sources if p.exists()), None)
+    if case['label'] == 'e11':
+        for name in ['checkpoint.mat', 'final_state.npz', 'endpoint_summary.json']:
+            shutil.copy2(run / 'stopped_result' / name, folder / name)
     source_hash = None
     if source:
         source_hash = hashlib.sha256(source.read_bytes()).hexdigest()
@@ -133,7 +136,7 @@ for case, milestone in zip(cases, milestones):
             assert np.isnan(reported)
 
 pages = sorted((BUILD / 'pages').glob('*.pdf'))
-assert len(pages) == 12
+assert len(pages) == 15
 book = pdfium.PdfDocument.new()
 reports = []
 for path in pages:
@@ -158,7 +161,8 @@ for svg in OUT.glob('*.svg'):
         svg.write_text(content.replace('<image ', '<image style="image-rendering:pixelated" '))
 
 font = ImageFont.truetype('C:/Windows/Fonts/times.ttf', 18)
-sheet = Image.new('RGB', (1600, 6*430), '#eeeeee')
+sheet_rows = (len(reports)+1)//2
+sheet = Image.new('RGB', (1600, sheet_rows*430), '#eeeeee')
 draw = ImageDraw.Draw(sheet)
 for i, report in enumerate(reports):
     image = Image.open(OUT / (report['figure'] + '.png'))
@@ -168,12 +172,13 @@ for i, report in enumerate(reports):
     sheet.paste(image, (x + (775-image.width)//2, y))
     draw.text((x, y+390), report['figure'], font=font, fill='black')
 sheet.save(OUT / 'contact_sheet.png')
-for half in range(2):
-    sheet.crop((0, half*1290, 1600, (half+1)*1290)).save(OUT / f'contact_sheet_{half+1}.png')
+for part in range((sheet_rows+2)//3):
+    sheet.crop((0, part*1290, 1600, min(sheet.height, (part+1)*1290))).save(OUT / f'contact_sheet_{part+1}.png')
 
 for name in ['plot_all_Europa_figures.m', 'plot_Europa_paper_figures.m',
              'finalize_all_Europa_figures.py', 'preserve_Europa_paper_outputs.py']:
     shutil.copy2(ROOT / 'model_and_dependencies' / name, OUT / name)
+shutil.copy2(ROOT / 'scripts/preserve_stopped_Europa_kc11.py', OUT / 'preserve_stopped_Europa_kc11.py')
 verification = dict(passed=True, cases=checks, selections=selection_checks,
                     displayed_field_checks=field_checks, milestone_first_samples_verified=True,
                     accepted_depletion_endpoints_verified=True, completion_policy=facts['completion_policy'],
@@ -183,10 +188,10 @@ verification = dict(passed=True, cases=checks, selections=selection_checks,
 (OUT / 'verification.json').write_text(json.dumps(verification, indent=2))
 README = '''Complete Europa figure set
 
-Five kc values (m2): 1.85e-16, 1.85e-14, 1.85e-12, 1.85e-10, 1.85e-8.
-All five saved endpoints are classified as depletion complete, as requested
-by the user on 2026-10-28. Every case has less than 1% initial shell melt
-remaining. Labels and endpoint markers treat all five cases equally.
+Six kc values (m2): 1.85e-16, 1.85e-14, 1.85e-12, 1.85e-11, 1.85e-10, 1.85e-8.
+All six saved endpoints are classified as depletion complete, as requested
+by the user on 2026-10-28 and 2026-10-29. Every case has less than 1% initial
+shell melt remaining. Labels and endpoint markers treat all six cases equally.
 Original solver stop reasons and all measured values remain in the archive.
 
 01 Figure 4: Europa net delivery vs permeability; all depletion-complete points
@@ -201,11 +206,11 @@ Original solver stop reasons and all measured values remain in the archive.
 04 Figure 7: melt volume and depth, primary grouping. Display windows remain
    1500, 5000 and 500 years for panels (a), (b), (c); complete data are retained.
 05 Supplementary S4: the primary grouping over full available times, semilog.
-06 Five-case evolution: rows share shell-melt milestones, not common times.
-07 Five-case full-time histories: melt remaining, depth, net delivery/refreezing.
+06 Six-case evolution: rows share shell-melt milestones, not common times.
+07 Six-case full-time histories: melt remaining, depth, net delivery/refreezing.
 08 Exact endpoint shell-volume budgets (delivered + refrozen + remaining).
 09 First recorded delivery and 10%/1% remaining thresholds, plus the accepted
-   depletion-complete endpoint times for all five cases. The separate 0.5%
+   depletion-complete endpoint times for all six cases. The separate 0.5%
    crossing column retains actual values or NaN; completion is not substituted
    into that quantitative threshold column. No interpolation is used.
 10 Initial state and actual endpoints: full-domain temperature and melt fraction.
@@ -214,8 +219,10 @@ Original solver stop reasons and all measured values remain in the archive.
 12 Original manuscript Figure 6 requested timestamps, showing first actual
    available saved states at/after those times. The fields are corrected results,
    not reproductions of the old paper's physical migration times.
+13-15 Additional e-16/e-11/e-8 comparison in the same manuscript layout:
+   temperature/melt evolution, linear melt/depth histories and semilog histories.
 
-PNG (300 dpi), vector SVG, editable MATLAB FIG, and a combined 12-page PDF
+PNG (300 dpi), vector SVG, editable MATLAB FIG, and a combined 15-page PDF
 are provided. Text uses Times New Roman. Selected actual field arrays, scalar
 histories, selection CSVs, endpoint/milestone tables and run-source provenance
 are retained. No numerical field smoothing or temporal/spatial interpolation.

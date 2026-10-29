@@ -13,11 +13,12 @@ set(groot,'defaultAxesFontName','Times New Roman','defaultTextFontName','Times N
 H=plot_Europa_paper_figures('helpers');
 sweep=strtrim(fileread(fullfile(repo,'tmp','Europa_S3_latest_sweep.txt')));
 folders={fullfile(repo,'Output','Europa_kc_1.850e-16_until_depleted_20261024_085440'), ...
- fullfile(sweep,'kc_1.850e-14'),fullfile(sweep,'kc_1.850e-12'),fullfile(sweep,'kc_1.850e-10'), ...
+ fullfile(sweep,'kc_1.850e-14'),fullfile(sweep,'kc_1.850e-12'), ...
+ strtrim(fileread(fullfile(repo,'tmp','Europa_S3_kc11_run.txt'))),fullfile(sweep,'kc_1.850e-10'), ...
  fullfile(repo,'Output','Europa_S3_corrected_kc_1.850e-08_20261025_130101')};
-labels={'e16','e14','e12','e10','e08'};coefficients=[1.85e-16 1.85e-14 1.85e-12 1.85e-10 1.85e-8];
-cases=cell(1,5);records=cell(1,5);selections={};
-for k=1:5
+labels={'e16','e14','e12','e11','e10','e08'};coefficients=[1.85e-16 1.85e-14 1.85e-12 1.85e-11 1.85e-10 1.85e-8];
+n=numel(labels);cases=cell(1,n);records=cell(1,n);selections={};
+for k=1:n
  c=H.read_case(folders{k},labels{k},build_dir,k~=1);assert(c.kc==coefficients(k));
  % All saved endpoints are accepted as depletion complete by the user.
  % Preserve the original solver stop reason separately from this classification.
@@ -32,14 +33,14 @@ for k=1:5
   'status',c.status,'original_solver_status',c.original_solver_status, ...
   'summary',c.summary,'cutoff_step',height(b)-1,'cutoff_years',b.time_years(end));
 end
-colors=[.28 .25 .60;.08 .60 .65;.16 .52 .24;.85 .40 .08;.72 .13 .20];
-styles={'-',':','-.','--','-'};
-status=strings(5,1);for k=1:5,status(k)=string(cases{k}.status);end
+colors=[.28 .25 .60;.08 .60 .65;.16 .52 .24;.15 .15 .15;.85 .40 .08;.72 .13 .20];
+styles={'-',':','-.','-','--','-'};
+status=strings(n,1);for k=1:n,status(k)=string(cases{k}.status);end
 assert(all(status=="complete"));
 endpoint_table=table(coefficients(:),status(:),'VariableNames',{'kc_m2','status'});
 columns={'steps','time_years','initial_shell_km3','delivered_net_km3','refrozen_net_shell_km3','remaining_shell_km3','remaining_fraction'};
-for j=1:numel(columns),endpoint_table.(columns{j})=zeros(5,1);end
-for k=1:5
+for j=1:numel(columns),endpoint_table.(columns{j})=zeros(n,1);end
+for k=1:n
  s=cases{k}.summary;
  endpoint_table.steps(k)=s.steps;endpoint_table.time_years(k)=s.time_years;
  endpoint_table.initial_shell_km3(k)=s.initial_shell_melt_km3;
@@ -61,8 +62,8 @@ ax=axes(f,'Position',[.575 .20 .35 .70]);hold(ax,'on');phi=logspace(-3,0,301);
 % This band uses the manuscript's reported k0 fit, not a new empirical fit.
 lo=10^(-7.71-2*.42)*phi.^3;hi=10^(-7.71+2*.42)*phi.^3;
 fill(ax,[phi fliplr(phi)],[lo fliplr(hi)],[.89 .92 .95],'EdgeColor','none','HandleVisibility','off');
-hh=gobjects(1,5);ll=cell(1,5);
-for k=1:5,hh(k)=plot(ax,phi,coefficients(k)*phi.^3,'Color',colors(k,:),'LineStyle',styles{k},'LineWidth',1.2);ll{k}=H.kc_label(cases{k});end
+hh=gobjects(1,n);ll=cell(1,n);
+for k=1:n,hh(k)=plot(ax,phi,coefficients(k)*phi.^3,'Color',colors(k,:),'LineStyle',styles{k},'LineWidth',1.2);ll{k}=H.kc_label(cases{k});end
 set(ax,'XScale','log','YScale','log','XLim',[1e-3 1],'YLim',[1e-22 1e-7], ...
  'XTick',[.001 .01 .1 1],'YTick',10.^(-22:3:-7));H.style(ax);
 xlabel(ax,'Melt fraction, \phi [-]');ylabel(ax,'Permeability k [m^2]');H.panel_letter(ax,'(b)');
@@ -94,10 +95,11 @@ save(fullfile(output_dir,'Europa_theory_grid.mat'),'TC','V','foundering','ph','l
 write_json(fullfile(output_dir,'Europa_theory_parameters.json'),theory);
 
 % Main manuscript Figure 6/7/S4 grouping: e-16, e-10, e-8.
-main={cases{1},cases{4},cases{5}};
+middle_index=find(strcmp(labels,'e10'));high_index=find(strcmp(labels,'e08'));focus_index=find(strcmp(labels,'e11'));
+main={cases{1},cases{middle_index},cases{high_index}};
 requests={ [0 100 300 500 650 1000 2000 5000 20000 cases{1}.budget.time_years(end)], ...
- [0 30 100 150 165 180 300 1000 10000 cases{4}.budget.time_years(end)], ...
- [0 30 60 75 80 85 100 200 400 cases{5}.budget.time_years(end)]};
+ [0 30 100 150 165 180 300 1000 10000 cases{middle_index}.budget.time_years(end)], ...
+ [0 30 60 75 80 85 100 200 400 cases{high_index}.budget.time_years(end)]};
 for k=1:3
  main{k}.requested=requests{k};main{k}=H.select_states(main{k});file=['main_states_' main{k}.label '.csv'];
  writetable(main{k}.selected,fullfile(output_dir,file));selections{end+1}=struct('file',file,'label',main{k}.label,'purpose','main manuscript grouping');
@@ -107,16 +109,16 @@ H.field_strip(main{1},main{3},'03_Figure6_Europa_evolution',output_dir,build_dir
 H.history_figure(main{1},main{3},false,'04_Figure7_Europa_volume_and_depth',output_dir,build_dir,main{2});
 H.history_figure(main{1},main{3},true,'05_FigureS4_Europa_semilog',output_dir,build_dir,main{2});
 
-% All five cases, aligned by actual shell-melt milestones (not equal time).
-all_field_strip(cases,H,'06_all_five_cases_evolution',output_dir,build_dir);
-overview(cases,colors,styles,H,'07_all_five_case_histories',output_dir,build_dir);
+% All cases, aligned by actual shell-melt milestones (not equal time).
+all_field_strip(cases,H,'06_all_cases_evolution',output_dir,build_dir);
+overview(cases,colors,styles,H,'07_all_case_histories',output_dir,build_dir);
 
 % Exact inventories at the observed endpoints.
 f=H.new_figure(1120,500);ax=axes(f,'Position',[.085 .24 .86 .66]);hold(ax,'on');
 values=[endpoint_table.delivered_net_km3 endpoint_table.refrozen_net_shell_km3 endpoint_table.remaining_shell_km3];
-bars=bar(ax,1:5,values,'stacked','BarWidth',.64);palette=[.18 .37 .69;.85 .38 .10;.50 .55 .59];
+bars=bar(ax,1:n,values,'stacked','BarWidth',.64);palette=[.18 .37 .69;.85 .38 .10;.50 .55 .59];
 for j=1:3,bars(j).FaceColor=palette(j,:);bars(j).EdgeColor='none';end
-for k=1:5
+for k=1:n
  marker='^';face=[.15 .15 .15];
  plot(ax,k,33.3,marker,'MarkerSize',8,'MarkerFaceColor',face,'Color',[.15 .15 .15],'LineWidth',1.2,'HandleVisibility','off');
  text(ax,k,values(k,1)/2,sprintf('%.2f',values(k,1)),'Color','w','HorizontalAlignment','center','FontSize',11);
@@ -126,17 +128,18 @@ for k=1:5
   text(ax,k,34.8,sprintf('%.2f refrozen',values(k,2)),'Color',palette(2,:),'HorizontalAlignment','center','FontSize',9);
  end
 end
-set(ax,'XLim',[.4 5.6],'XTick',1:5,'XTickLabel',arrayfun(@(e)['1.85 \times 10^{' num2str(e) '}'],[-16 -14 -12 -10 -8],'UniformOutput',false),'YLim',[0 36]);
+exponents=round(log10(coefficients/1.85));
+set(ax,'XLim',[.4 n+.6],'XTick',1:n,'XTickLabel',arrayfun(@(e)['1.85 \times 10^{' num2str(e) '}'],exponents,'UniformOutput',false),'YLim',[0 36]);
 H.style(ax);xlabel(ax,'Permeability coefficient k_0 [m^2]');ylabel(ax,'Volume [km^3]');
 legend(ax,bars,{'Net delivered','Net refrozen in shell','Remaining in shell'},'Location','northoutside','Orientation','horizontal','Box','off');
-H.footnote(f,'Each stack sums to the same initialized shell melt. All five cases: depletion complete.');
+H.footnote(f,'Each stack sums to the same initialized shell melt. All cases: depletion complete.');
 H.finish(f,'08_Europa_endpoint_volume_budgets',output_dir,build_dir);
 
 % First actual timestep attaining diagnostic thresholds; no time interpolation.
 milestones=table(coefficients(:),'VariableNames',{'kc_m2'});
 fields={'delivery_25pct_years','delivery_50pct_years','delivery_75pct_years','remaining_10pct_years','remaining_1pct_years','remaining_0p5pct_years','front_9p95km_years'};
-for j=1:numel(fields),milestones.(fields{j})=NaN(5,1);end
-for k=1:5
+for j=1:numel(fields),milestones.(fields{j})=NaN(n,1);end
+for k=1:n
  b=cases{k}.budget;initial=b.melt_shell_m3(1);
  masks={b.delivered_net_m3>=.25*initial,b.delivered_net_m3>=.50*initial,b.delivered_net_m3>=.75*initial, ...
   b.melt_shell_m3<=.10*initial,b.melt_shell_m3<=.01*initial,b.melt_shell_m3<=.005*initial,b.penetration_depth_km>=9.95-1e-9};
@@ -166,8 +169,8 @@ endpoint_fields(cases,H,'10_Europa_initial_and_endpoint_fields',output_dir,build
 % Late residual melt and liquid stored in the model lower layer.
 f=H.new_figure(1120,500);
 for panel=1:2
- ax=axes(f,'Position',[.085+(panel-1)*.49 .23 .36 .66]);hold(ax,'on');hh=gobjects(1,5);
- for k=1:5
+ ax=axes(f,'Position',[.085+(panel-1)*.49 .23 .36 .66]);hold(ax,'on');hh=gobjects(1,n);
+ for k=1:n
   b=cases{k}.budget;keep=b.time_years>0;
   if panel==1,y=b.melt_shell_m3/1e9;else,y=b.melt_ocean_region_m3/1e9;end
   hh(k)=plot(ax,b.time_years(keep),y(keep),'Color',colors(k,:),'LineStyle',styles{k},'LineWidth',1.4);
@@ -193,8 +196,15 @@ end
 H.field_strip(paper{1},paper{3},'12_Europa_original_requested_times',output_dir,build_dir, ...
  'Original manuscript time requests; labels show the first actual saved time at or after each request. These corrected fields are not the old manuscript results.',paper{2});
 
+% Additional manuscript-layout comparison for the newly accepted e-11 endpoint.
+focus={main{1},cases{focus_index},main{3}};
+H.field_strip(focus{1},focus{3},'13_Europa_kc11_temperature_and_melt',output_dir,build_dir, ...
+ 'Actual saved states; no interpolation. Comparison: e-16 / e-11 / e-8. All cases: depletion complete.',focus{2});
+H.history_figure(focus{1},focus{3},false,'14_Europa_kc11_volume_and_depth',output_dir,build_dir,focus{2});
+H.history_figure(focus{1},focus{3},true,'15_Europa_kc11_semilog',output_dir,build_dir,focus{2});
+
 facts=struct('font','Times New Roman','cases',{records},'selection_sets',{selections}, ...
- 'case_order','kc = 1.85e-16, 1.85e-14, 1.85e-12, 1.85e-10, 1.85e-8 m2', ...
+ 'case_order','kc = 1.85e-16, 1.85e-14, 1.85e-12, 1.85e-11, 1.85e-10, 1.85e-8 m2', ...
  'reference_main_pdf',fullfile(repo,'docs','Impact_melt_foundering.pdf'), ...
  'reference_supplement_pdf',fullfile(repo,'docs','Impact_melt_foundering (1).pdf'), ...
  'data_interpolation',false,'temperature_band_outlines',false,'image_smoothing',false, ...
@@ -202,20 +212,20 @@ facts=struct('font','Times New Roman','cases',{records},'selection_sets',{select
  'empirical_band_source','Main manuscript Figure 4 caption; reported log10(k0) mean -7.71 and standard deviation 0.42; not refitted.', ...
  'missing_data',{{'Raw empirical permeability scatter and error bars','Corrected Titan simulations'}}, ...
  'milestones','First actual diagnostic row; unavailable thresholds remain NaN.', ...
- 'completion_policy','All five recorded endpoints accepted as depletion complete by user instruction, 2026-10-28; original solver stop reasons and residual melt are preserved.', ...
+ 'completion_policy','All six recorded endpoints accepted as depletion complete by user instruction, 2026-10-28 and 2026-10-29; original solver stop reasons and residual melt are preserved.', ...
  'completion_time_definition','Recorded accepted endpoint, not a substituted 0.5-percent threshold-crossing time.', ...
  'solver_advanced_for_figures',false,'pressure_accuracy_certified',false);
 write_json(fullfile(output_dir,'plot_provenance.json'),facts);
-fid=fopen(fullfile(output_dir,'PLOTTING_COMPLETE.txt'),'w');fprintf(fid,'Twelve Europa figures created from saved data only.\n');fclose(fid);
+fid=fopen(fullfile(output_dir,'PLOTTING_COMPLETE.txt'),'w');fprintf(fid,'Fifteen Europa figures created from saved data only.\n');fclose(fid);
 fprintf('ALL_EUROPA_FIGURES_COMPLETE %s\n',output_dir);
 end
 
 function all_field_strip(cases,H,stem,out,build)
-f=H.new_figure(1500,1050);cache=fullfile(out,'selected_fields');if ~isfolder(cache),mkdir(cache);end
-rowy=linspace(.82,.16,5);width=.086;height=.12;left=.075;
+n=numel(cases);f=H.new_figure(1500,210*n);cache=fullfile(out,'selected_fields');if ~isfolder(cache),mkdir(cache);end
+rowy=linspace(.84,.15,n);width=.086;height=.60/n;left=.075;
 annotation(f,'textbox',[.43 .965 .12 .025],'String','t [years]','EdgeColor','none','FontSize',16);
 annotation(f,'arrow',[.55 .83],[.98 .98]);
-for row=1:5
+for row=1:n
  c=cases{row};
  for col=1:10
   s=H.load_fields(c.selected(col,:));cache_state(s,c.label,cache);
@@ -224,11 +234,11 @@ for row=1:5
   ax=axes(f,'Position',[left+(col-1)*width rowy(row) width height]);
   rgb=field_rgb(T,P);imagesc(ax,r(ix),z(iz),rgb);set(ax,'YDir','normal','XLim',[0 10],'YLim',[0 10], ...
    'XTick',[],'YTick',[],'Box','on','LineWidth',.45,'FontName','Times New Roman','FontSize',10);
-  if col==1,set(ax,'YTick',[0 5 10]);ylabel(ax,'z [km]');if row==5,set(ax,'XTick',[0 5 10]);xlabel(ax,'r [km]');end;end
+  if col==1,set(ax,'YTick',[0 5 10]);ylabel(ax,'z [km]');if row==n,set(ax,'XTick',[0 5 10]);xlabel(ax,'r [km]');end;end
   title(ax,time_text(s.time_years),'FontWeight','normal','FontSize',11);
  end
  caption=H.kc_label(c);
- annotation(f,'textbox',[left rowy(row)+height+.016 .65 .022],'String',caption,'EdgeColor','none','Margin',0,'FontSize',9.5);
+ annotation(f,'textbox',[left rowy(row)+height+.08/n .65 .11/n],'String',caption,'EdgeColor','none','Margin',0,'FontSize',9.5);
  annotation(f,'textbox',[.012 rowy(row)+height-.005 .05 .03],'String',sprintf('(%c)','a'+row-1),'EdgeColor','none','FontSize',18);
 end
 H.horizontal_scale(f,[.30 .11 .27 .012],[0 1],flipud(parula(256)),0:.2:1,'Melt fraction');
@@ -240,11 +250,11 @@ H.finish(f,stem,out,build);
 end
 
 function overview(cases,colors,styles,H,stem,out,build)
-f=H.new_figure(1200,850);fields={'melt_shell_m3','penetration_depth_km','delivered_net_m3','refrozen_net_shell_m3'};
+n=numel(cases);f=H.new_figure(1200,850);fields={'melt_shell_m3','penetration_depth_km','delivered_net_m3','refrozen_net_shell_m3'};
 ylabs={'Shell melt [km^3]','Penetration depth [km]','Net delivered [km^3]','Net refrozen in shell [km^3]'};
 for panel=1:4
- col=mod(panel-1,2);row=floor((panel-1)/2);ax=axes(f,'Position',[.085+col*.49 .57-row*.40 .36 .30]);hold(ax,'on');hh=gobjects(1,5);
- for k=1:5
+ col=mod(panel-1,2);row=floor((panel-1)/2);ax=axes(f,'Position',[.085+col*.49 .57-row*.40 .36 .30]);hold(ax,'on');hh=gobjects(1,n);
+ for k=1:n
   b=cases{k}.budget;keep=b.time_years>0;y=b.(fields{panel});if panel~=2,y=y/1e9;end
   hh(k)=plot(ax,b.time_years(keep),y(keep),'Color',colors(k,:),'LineStyle',styles{k},'LineWidth',1.4);
   mark_endpoint(ax,b.time_years(end),y(end),cases{k},colors(k,:));
@@ -258,13 +268,14 @@ H.finish(f,stem,out,build);
 end
 
 function endpoint_fields(cases,H,stem,out,build)
-f=H.new_figure(1800,750);cache=fullfile(out,'selected_fields');
-initial=H.load_fields(cases{1}.index(1,:));states=cell(1,6);states{1}=initial;
-for k=1:5,s=H.load_fields(cases{k}.index(end,:));assert(s.step==cases{k}.summary.steps);states{k+1}=s;cache_state(s,cases{k}.label,cache);end
-for col=1:6
+n=numel(cases);ncols=n+1;column_width=.90/ncols;
+f=H.new_figure(300*ncols,750);cache=fullfile(out,'selected_fields');
+initial=H.load_fields(cases{1}.index(1,:));states=cell(1,ncols);states{1}=initial;
+for k=1:n,s=H.load_fields(cases{k}.index(end,:));assert(s.step==cases{k}.summary.steps);states{k+1}=s;cache_state(s,cases{k}.label,cache);end
+for col=1:ncols
  s=states{col};r=s.radius_km(:);z=s.elevation_km(:);P=reshape(s.phi,numel(z),numel(r));T=reshape(s.temperature_K,size(P));
  for row=1:2
-  row_y=[.65 .24];ax=axes(f,'Position',[.05+(col-1)*.15 row_y(row) .135 .205]);
+  row_y=[.65 .24];ax=axes(f,'Position',[.05+(col-1)*column_width row_y(row) .90*column_width .205]);
   if row==1,imagesc(ax,r,z,T);colormap(ax,bone(256));caxis(ax,[100 273]);else,imagesc(ax,r,z,P);colormap(ax,flipud(parula(256)));caxis(ax,[0 1]);end
   set(ax,'YDir','normal','XLim',[0 20],'YLim',[-2 10],'XTick',[0 10 20],'YTick',[-2 0 5 10],'FontSize',10,'Layer','top');
   yline(ax,0,'--','Color',[.45 .45 .45]);if col==1,ylabel(ax,'Elevation [km]');end;xlabel(ax,'Radius [km]');
